@@ -2,6 +2,8 @@ extern crate ws;
 extern crate futures;
 
 use futures::{BoxFuture, Future};
+use futures::future::IntoFuture;
+use futures::future::{ok, err, FutureResult};
 
 // defmodule HelloPhoenix.RoomChannel do
 //   use Phoenix.Channel
@@ -24,8 +26,9 @@ use futures::{BoxFuture, Future};
 //   end
 // end
 
-
 // TODO: eventually should be https://docs.rs/futures/0.1/futures/future/trait.IntoFuture.html
+
+// don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
 
 pub struct Server {
   route_table: Option<Box<Fn(String) -> BoxFuture<String, String>>>
@@ -44,13 +47,6 @@ impl Server {
 
   pub fn listen<T: Into<String>>(self, bind_addr: T) {
     let addr: String = bind_addr.into();
-    // ws::listen((addr + ":3333").as_str(), |out| {
-    //   move |msg: ws::Message| {
-    //     out.send(msg);
-    //     Ok(())
-    //   }
-    // });
-
     ws::listen((addr + ":3333").as_str(), |out| {
       let server = &self;
       move |msg: ws::Message| {
@@ -80,7 +76,6 @@ impl Server {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use futures::future::ok;
   #[test]
   fn it_works() {
     let mut s = Server::new();
