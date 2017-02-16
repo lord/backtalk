@@ -1,11 +1,17 @@
 extern crate ws;
+extern crate futures;
 
-#[cfg(test)]
-mod tests {
-    use ws;
-    #[test]
-    fn it_works() {
-        ws::listen("127.0.0.1:3012", |out| {
+struct Server {}
+
+impl Server {
+    fn new() -> Server {
+        let s = Server{};
+        s
+    }
+
+    fn listen<T: Into<String>>(self, bind_addr: T) {
+        let addr: String = bind_addr.into();
+        ws::listen((addr + ":3333").as_str(), |out| {
             move |msg: ws::Message| {
                 println!("{:?}", msg);
                 let msg_str = msg.as_text().unwrap();
@@ -13,5 +19,15 @@ mod tests {
                 out.send(ws::Message::text(foo))
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn it_works() {
+        let s = Server::new();
+        s.listen("127.0.0.1");
     }
 }
