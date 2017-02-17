@@ -6,3 +6,4 @@ authors = ["Robert Lord <robert@lord.io>"]
 [dependencies]
 ws = "0.5.3"
 futures = "0.1.9"
+tokio-core = "0.1"
