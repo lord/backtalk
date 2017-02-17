@@ -8,7 +8,6 @@ use futures::future::{ok, err, FutureResult};
 use tokio_core::reactor::Core;
 use std::thread;
 
-
 // defmodule HelloPhoenix.RoomChannel do
 //   use Phoenix.Channel
 
@@ -34,6 +33,49 @@ use std::thread;
 
 // don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
 
+struct WebSocketHandler<'a> {
+    sender: ws::Sender,
+    route: Option<String>, // TODO better routing method than strings, like maybe a route index or something
+    server: &'a Server,
+    eloop: tokio_core::reactor::Remote,
+}
+
+impl <'a> ws::Handler for WebSocketHandler<'a> {
+  fn on_request(&mut self, req: &ws::Request) -> ws::Result<ws::Response> {
+    match req.resource() {
+      "/one" => self.route = Some("/one".to_string()),
+      "/two" => self.route = Some("/two".to_string()),
+
+      _ => {
+        let mut resp = ws::Response::from_request(req).unwrap();
+        resp.set_status(404);
+        return Ok(resp);
+      },
+    }
+    ws::Response::from_request(req)
+  }
+
+  fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
+    let msg = format!("{}:{}", self.route.clone().unwrap(), msg);
+    let out = self.sender.clone();
+    match self.server.route_table {
+      Some(ref f) => {
+        let prom = f(msg).then(move |resp| {
+          println!("resp: {:?}", &resp);
+          match resp {
+            Ok(s) => out.send(ws::Message::text(s)),
+            Err(s) => out.send(ws::Message::text(s)),
+          };
+          ok(())
+        });
+        self.eloop.spawn(|_| prom);
+      },
+      None => unimplemented!(),
+    }
+    Ok(())
+  }
+}
+
 pub struct Server {
   route_table: Option<Box<Fn(String) -> BoxFuture<String, String> + Send>>
 }
@@ -49,48 +91,28 @@ impl Server {
     self.route_table = Some(Box::new(r));
   }
 
-  fn ws_listen<T: Into<String>>(self, bind_addr: T, eloop: tokio_core::reactor::Remote) {
-    let addr: String = bind_addr.into();
-    ws::listen((addr + ":3333").as_str(), |out| {
-      let server = &self;
-      let eloop = eloop.clone();
-      move |msg: ws::Message| {
-        let out = out.clone();
-        println!("req: {:?}", msg);
-        match server.route_table {
-          None => {
-            println!("resp failed");
-            out.send(ws::Message::text("failed!"));
-          },
-          Some(ref route) => {
-            let msg_str = msg.as_text().unwrap().to_string();
-            let prom = route(msg_str).then(move |resp| {
-              println!("resp: {:?}", &resp);
-              match resp {
-                Ok(s) => out.send(ws::Message::text(s)),
-                Err(s) => out.send(ws::Message::text(s)),
-              };
-              ok(())
-            });
-            eloop.spawn(|_| prom);
-          }
-        };
-        Ok(())
-      }
-    });
-  }
-
   pub fn listen<T: Into<String> + Send + 'static>(self, bind_addr: T) {
     let mut eloop = Core::new().unwrap();
+    let addr: String = bind_addr.into();
     let eloop_remote = eloop.remote();
     thread::spawn(move || {
-      self.ws_listen(bind_addr, eloop_remote)
+      let server = &self;
+      ws::listen((addr + ":3333").as_str(), |out| {
+        return WebSocketHandler {
+          sender: out.clone(),
+          route: None,
+          eloop: eloop_remote.clone(),
+          server: server,
+        };
+      })
     });
     println!("starting event loop");
     eloop.run(futures::future::empty::<(), ()>());
     println!("event loop stopped");
   }
 }
+
+// TODO could a client continue the connection even after the 404? make sure not
 
 #[cfg(test)]
 mod tests {
@@ -99,7 +121,7 @@ mod tests {
   fn it_works() {
     let mut s = Server::new();
     s.route(|msg| {
-      ok(format!("backtalk echo: {}", msg)).boxed()
+      ok(format!("backtalk echx: {}", msg)).boxed()
     });
     s.listen("127.0.0.1");
   }
