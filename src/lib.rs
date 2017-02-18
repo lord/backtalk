@@ -1,12 +1,15 @@
 extern crate ws;
 extern crate futures;
 extern crate tokio_core;
+extern crate serde_json;
 
 use futures::{BoxFuture, Future};
 use futures::future::IntoFuture;
 use futures::future::{ok, err, FutureResult};
 use tokio_core::reactor::Core;
 use std::thread;
+use serde_json::Value as JsonValue;
+use serde_json::value::Map;
 
 // defmodule HelloPhoenix.RoomChannel do
 //   use Phoenix.Channel
@@ -33,35 +36,102 @@ use std::thread;
 
 // don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
 
-// PLAN:
-// methods:
-//   - indempotent
-//     - list -> GET /resource
-//     - get -> GET /resource/123
-//     - delete -> DELETE /resource/123 (NOTE! MUST BE INDEPOTENT, that is, you can call it many times and it'll have the same effect as just once)
-//   - not indempotent
-//     - create -> POST /resource
-//     - patch -> PATCH /resource/123
-//     - (custom) -> POST /resource/123/actionname (a la stripe)
+// TODO be able to return a future of anything that can be IntoReply instead of just Reply?
+
+// TODO I think macros can help with reducing usage of BoxFuture which is slower?
+//      it would be cool if we used futures in a zero-cost way
+//      also, it would be nice if we didn't have to write ok(fut).boxed() everywhere
+//      see Rocket for inspiration
 
 #[derive(Debug)]
 pub struct Req {
-  pub data: String,
+  id: Option<String>,
+  params: Map<String, JsonValue>,
+  data: JsonValue,
+  resource: String, // TODO should routes be strings?
+  method: Method,
 }
 
 #[derive(Debug)]
-pub struct Reply {
-  pub data: String,
-  req: Req,
+pub enum Method {
+  // indempotent methods (must be able to call many times and it'll have the same effect/return value as just once)
+  List, // -> GET /resource
+  Get, // -> GET /resource/123
+  Delete, // -> DELETE /resource/123
+  // not indempotent
+  Post, // -> POST /resource
+  Patch, // -> PATCH /resource/123
+  Action(String), // -> POST /resource/123/actionname
+}
+
+impl Method {
+  fn from_str(s: String) -> Method {
+    match s.as_str() {
+      "list" => Method::List,
+      "get" => Method::Get,
+      "delete" => Method::Delete,
+      "post" => Method::Post,
+      "patch" => Method::Patch,
+      _ => Method::Action(s),
+    }
+  }
 }
 
 impl Req {
   fn into_reply(self, reply: String) -> Reply {
     Reply {
       data: reply,
-      req: self,
+      // req: self,
     }
   }
+
+  fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
+    let raw_dat = serde_json::from_str(&s);
+    let raw_arr = match raw_dat {
+      Ok(JsonValue::Array(a)) => a,
+      Ok(_) => return Err(Reply { data: "was not array error TODO".to_string() }),
+      _ => return Err(Reply { data: "could not parse input as json TODO".to_string() }),
+    };
+    // [method, params, id, data]
+    // id and data may be null, depending on the method
+    if raw_arr.len() != 4 {
+      return Err(Reply { data: "wrong number of args".to_string() });
+    }
+
+    let mut raw_iter = raw_arr.into_iter();
+    let method = match raw_iter.next().unwrap() {
+      JsonValue::String(s) => s,
+      _ => return Err(Reply { data: "method must be a string".to_string() }),
+    };
+    let params = match raw_iter.next().unwrap() {
+      JsonValue::Object(o) => o,
+      _ => return Err(Reply { data: "params must be an object".to_string() }) // TODO convert null to empty object
+    };
+    let id = match raw_iter.next().unwrap() {
+      JsonValue::String(s) => Some(s),
+      JsonValue::Null => None,
+      _ => return Err(Reply { data: "id must be a string or null".to_string() }), // TODO allow numeric ids
+    };
+    let data = raw_iter.next().unwrap();
+
+    // TODO check that the right things are present
+
+    let req = Req {
+      resource: route.to_string(),
+      method: Method::from_str(method),
+      params: params,
+      id: id,
+      data: data,
+    };
+
+    Ok(req)
+  }
+}
+
+#[derive(Debug)]
+pub struct Reply {
+  pub data: String,
+  // req: Req,
 }
 
 struct WebSocketHandler<'a> {
@@ -91,12 +161,15 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
       Some(ref r) => r,
       None => return Err(ws::Error::new(ws::ErrorKind::Internal, "")),
     };
-    let msg = format!("{}:{}", route_str, msg);
     let out = self.sender.clone();
     match self.server.route_table {
       Some(ref f) => {
-        let req = Req {
-          data: msg,
+        let req = match Req::from_websocket_string(msg.to_string(), route_str) {
+          Ok(req) => req,
+          Err(e) => {
+            out.send(ws::Message::text(e.data));
+            return Ok(())
+          }
         };
         let prom = f(req).then(move |resp| {
           println!("resp: {:?}", &resp);
@@ -157,7 +230,7 @@ mod tests {
   fn it_works() {
     let mut s = Server::new();
     s.route(|req| {
-      let reply_str = format!("backtalk echo: {}", &req.data);
+      let reply_str = format!("backtalk echo: {:?}", &req);
       ok(req.into_reply(reply_str)).boxed()
     });
     s.listen("127.0.0.1");

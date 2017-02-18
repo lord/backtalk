@@ -8,9 +8,9 @@
 
 Backtalk is a web framework for Rust. It's:
 
-- **Asynchronous** – Backtalk uses Futures for everything.
+- **Asynchronous** – use Futures for everything.
 - **Realtime** – expose the same API over both websockets and HTTP, and push live events to clients.
-- **Simple** – Backtalk tries to provide minimalist tools that are easily composed.
+- **Simple** – minimalist tools, easily composed.
 - **Opinionated** – exclusively for rapidly building JSON-based RESTful APIs.
 
 ## Tasks
@@ -27,3 +27,9 @@ Backtalk is a web framework for Rust. It's:
 - `Reply` is a response object representing JSON/BSON data that will be returned to the client, and a HTTP status (from a subset of subset of the messages)
 - `Guard` is a function that accepts a Request and returns a Future<Request, Reply>.
 - `Filter` is a function that accepts a Reply and returns a Future<Reply, Reply>.
+
+## Inspiration
+
+- Feathers.js
+- Phoenix
+- Rocket.rs
