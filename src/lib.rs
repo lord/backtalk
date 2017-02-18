@@ -81,38 +81,43 @@ impl Req {
   fn into_reply(self, reply: String) -> Reply {
     Reply {
       data: reply,
-      // req: self,
+      req: Some(self),
     }
   }
 
   fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
+    fn err(err_str: &str) -> Result<Req, Reply> {
+      Err(Reply { data: err_str.to_string(), req: None })
+    }
     let raw_dat = serde_json::from_str(&s);
-    let raw_arr = match raw_dat {
-      Ok(JsonValue::Array(a)) => a,
-      Ok(_) => return Err(Reply { data: "was not array error TODO".to_string() }),
-      _ => return Err(Reply { data: "could not parse input as json TODO".to_string() }),
+    let mut raw_iter = match raw_dat {
+      Ok(JsonValue::Array(a)) => a.into_iter(),
+      Ok(_) => return err("was not array error TODO"),
+      _ => return err("could not parse input as json TODO"),
     };
+
     // [method, params, id, data]
     // id and data may be null, depending on the method
-    if raw_arr.len() != 4 {
-      return Err(Reply { data: "wrong number of args".to_string() });
-    }
-
-    let mut raw_iter = raw_arr.into_iter();
-    let method = match raw_iter.next().unwrap() {
-      JsonValue::String(s) => s,
-      _ => return Err(Reply { data: "method must be a string".to_string() }),
+    let method = match raw_iter.next() {
+      Some(JsonValue::String(s)) => s,
+      Some(_) => return err("method must be a string"),
+      None => return err("missing method in request"),
     };
-    let params = match raw_iter.next().unwrap() {
-      JsonValue::Object(o) => o,
-      _ => return Err(Reply { data: "params must be an object".to_string() }) // TODO convert null to empty object
+    let params = match raw_iter.next() {
+      Some(JsonValue::Object(o)) => o,
+      Some(_) => return err("params must be an object"),
+      None => return err("missing params in request"), // TODO convert null to empty object
     };
-    let id = match raw_iter.next().unwrap() {
-      JsonValue::String(s) => Some(s),
-      JsonValue::Null => None,
-      _ => return Err(Reply { data: "id must be a string or null".to_string() }), // TODO allow numeric ids
+    let id = match raw_iter.next() {
+      Some(JsonValue::String(s)) => Some(s),
+      Some(JsonValue::Null) => None,
+      Some(_) => return err("id must be a string or null"),
+      None => return err("missing id in request"), // TODO allow numeric ids
     };
-    let data = raw_iter.next().unwrap();
+    let data = match raw_iter.next() {
+      Some(o) => o,
+      None => return err("missing data in request"),
+    };
 
     // TODO check that the right things are present
 
@@ -130,8 +135,8 @@ impl Req {
 
 #[derive(Debug)]
 pub struct Reply {
-  pub data: String,
-  // req: Req,
+  data: String,
+  req: Option<Req>,
 }
 
 struct WebSocketHandler<'a> {
@@ -159,7 +164,7 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
   fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
     let route_str = match self.route {
       Some(ref r) => r,
-      None => return Err(ws::Error::new(ws::ErrorKind::Internal, "")),
+      None => return Err(ws::Error::new(ws::ErrorKind::Internal, "route was unspecified")),
     };
     let out = self.sender.clone();
     match self.server.route_table {
