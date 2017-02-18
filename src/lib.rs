@@ -33,6 +33,17 @@ use std::thread;
 
 // don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
 
+// PLAN:
+// methods:
+//   - indempotent
+//     - list -> GET /resource
+//     - get -> GET /resource/123
+//     - delete -> DELETE /resource/123 (NOTE! MUST BE INDEPOTENT, that is, you can call it many times and it'll have the same effect as just once)
+//   - not indempotent
+//     - create -> POST /resource
+//     - patch -> PATCH /resource/123
+//     - (custom) -> POST /resource/123/actionname (a la stripe)
+
 #[derive(Debug)]
 pub struct Req {
   pub data: String,
