@@ -33,6 +33,26 @@ use std::thread;
 
 // don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
 
+#[derive(Debug)]
+pub struct Req {
+  pub data: String,
+}
+
+#[derive(Debug)]
+pub struct Reply {
+  pub data: String,
+  req: Req,
+}
+
+impl Req {
+  fn into_reply(self, reply: String) -> Reply {
+    Reply {
+      data: reply,
+      req: self,
+    }
+  }
+}
+
 struct WebSocketHandler<'a> {
     sender: ws::Sender,
     route: Option<String>, // TODO better routing method than strings, like maybe a route index or something
@@ -60,11 +80,14 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
     let out = self.sender.clone();
     match self.server.route_table {
       Some(ref f) => {
-        let prom = f(msg).then(move |resp| {
+        let req = Req {
+          data: msg,
+        };
+        let prom = f(req).then(move |resp| {
           println!("resp: {:?}", &resp);
           match resp {
-            Ok(s) => out.send(ws::Message::text(s)),
-            Err(s) => out.send(ws::Message::text(s)),
+            Ok(s) => out.send(ws::Message::text(s.data)),
+            Err(s) => out.send(ws::Message::text(s.data)),
           };
           ok(())
         });
@@ -77,7 +100,7 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
 }
 
 pub struct Server {
-  route_table: Option<Box<Fn(String) -> BoxFuture<String, String> + Send>>
+  route_table: Option<Box<Fn(Req) -> BoxFuture<Reply, Reply> + Send>>
 }
 
 impl Server {
@@ -87,7 +110,7 @@ impl Server {
   }
 
   pub fn route<T>(&mut self, r: T)
-    where T: Fn(String) -> BoxFuture<String, String> + 'static + Send {
+    where T: Fn(Req) -> BoxFuture<Reply, Reply> + 'static + Send {
     self.route_table = Some(Box::new(r));
   }
 
@@ -106,9 +129,7 @@ impl Server {
         };
       })
     });
-    println!("starting event loop");
     eloop.run(futures::future::empty::<(), ()>());
-    println!("event loop stopped");
   }
 }
 
@@ -120,8 +141,9 @@ mod tests {
   #[test]
   fn it_works() {
     let mut s = Server::new();
-    s.route(|msg| {
-      ok(format!("backtalk echx: {}", msg)).boxed()
+    s.route(|req| {
+      let reply_str = format!("backtalk echo: {}", &req.data);
+      ok(req.into_reply(reply_str)).boxed()
     });
     s.listen("127.0.0.1");
   }

@@ -7,3 +7,4 @@ authors = ["Robert Lord <robert@lord.io>"]
 ws = "0.5.3"
 futures = "0.1.9"
 tokio-core = "0.1"
+serde_json = "0.9"
