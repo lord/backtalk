@@ -15,7 +15,7 @@ Backtalk is a web framework for Rust. It's:
 
 ## Tasks
 
-- [ ] add JSON parsing and serialization into Req and Reply objects
+- [x] add JSON parsing and serialization into Req and Reply objects
 - [ ] add `Resource` trait with various methods
 - [ ] add `Filter` and `Guard` traits
 - [ ] add proper routing to `Server`

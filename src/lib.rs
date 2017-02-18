@@ -78,8 +78,9 @@ impl Method {
 }
 
 impl Req {
-  fn into_reply(self, reply: String) -> Reply {
+  fn into_reply(self, code: i64, reply: JsonValue) -> Reply {
     Reply {
+      code: code,
       data: reply,
       req: Some(self),
     }
@@ -87,7 +88,7 @@ impl Req {
 
   fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
     fn err(err_str: &str) -> Result<Req, Reply> {
-      Err(Reply { data: err_str.to_string(), req: None })
+      Err(Reply { code: 400, data: JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())]), req: None })
     }
     let raw_dat = serde_json::from_str(&s);
     let mut raw_iter = match raw_dat {
@@ -135,7 +136,8 @@ impl Req {
 
 #[derive(Debug)]
 pub struct Reply {
-  data: String,
+  data: JsonValue,
+  code: i64, // TODO replace with enum of errors, etc
   req: Option<Req>,
 }
 
@@ -172,15 +174,14 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
         let req = match Req::from_websocket_string(msg.to_string(), route_str) {
           Ok(req) => req,
           Err(e) => {
-            out.send(ws::Message::text(e.data));
+            out.send(ws::Message::text(e.data.to_string()));
             return Ok(())
           }
         };
         let prom = f(req).then(move |resp| {
-          println!("resp: {:?}", &resp);
           match resp {
-            Ok(s) => out.send(ws::Message::text(s.data)),
-            Err(s) => out.send(ws::Message::text(s.data)),
+            Ok(s) => out.send(ws::Message::text(s.data.to_string())),
+            Err(s) => out.send(ws::Message::text(s.data.to_string())),
           };
           ok(())
         });
@@ -236,7 +237,7 @@ mod tests {
     let mut s = Server::new();
     s.route(|req| {
       let reply_str = format!("backtalk echo: {:?}", &req);
-      ok(req.into_reply(reply_str)).boxed()
+      ok(req.into_reply(200, JsonValue::Array(vec![JsonValue::String(reply_str)]))).boxed()
     });
     s.listen("127.0.0.1");
   }
