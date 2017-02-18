@@ -8,6 +8,13 @@
 
 Backtalk is an experimental asynchronous web framework for Rust. We try to provide simple tools that are easily composed and extended.
 
+## Tasks
+
+- [ ] add JSON parsing and serialization into Req and Reply objects
+- [ ] add `Resource` trait with various methods
+- [ ] add `Filter` and `Guard` traits
+- [ ] add proper routing to `Server`
+
 ## Objects
 
 - `Resource` is an object that receives requests. Usually corresponds to a particular type of object. Allows adding hooks and methods and error handlers.
