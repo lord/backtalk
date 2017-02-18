@@ -78,7 +78,7 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
       "/two" => self.route = Some("/two".to_string()),
 
       _ => {
-        let mut resp = ws::Response::from_request(req).unwrap();
+        let mut resp = ws::Response::from_request(req)?;
         resp.set_status(404);
         return Ok(resp);
       },
@@ -87,7 +87,11 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
   }
 
   fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
-    let msg = format!("{}:{}", self.route.clone().unwrap(), msg);
+    let route_str = match self.route {
+      Some(ref r) => r,
+      None => return Err(ws::Error::new(ws::ErrorKind::Internal, "")),
+    };
+    let msg = format!("{}:{}", route_str, msg);
     let out = self.sender.clone();
     match self.server.route_table {
       Some(ref f) => {

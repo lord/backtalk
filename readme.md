@@ -6,7 +6,7 @@
   <a href="https://docs.rs/backtalk"><img src="https://img.shields.io/badge/docs.rs-visit-green.svg" alt="Documentation"></a>
 </p>
 
-Backtalk is an experimental asynchronous web framework for Rust. We try to provide simple tools that are easily composed and extended.
+Backtalk is an experimental asynchronous web framework for realtime APIs written in Rust. We try to provide simple tools that are easily composed.
 
 ## Tasks
 
