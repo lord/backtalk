@@ -78,12 +78,12 @@ impl Method {
 }
 
 impl Req {
-  fn into_reply(self, code: i64, reply: JsonValue) -> Reply {
-    Reply {
+  fn into_reply(self, code: i64, reply: JsonValue) -> BoxFuture<Reply, Reply> {
+    ok(Reply {
       code: code,
       data: reply,
       req: Some(self),
-    }
+    }).boxed()
   }
 
   fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
@@ -232,12 +232,14 @@ impl Server {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use futures;
+
   #[test]
   fn it_works() {
     let mut s = Server::new();
     s.route(|req| {
       let reply_str = format!("backtalk echo: {:?}", &req);
-      ok(req.into_reply(200, JsonValue::Array(vec![JsonValue::String(reply_str)]))).boxed()
+      req.into_reply(200, JsonValue::Array(vec![JsonValue::String(reply_str)]))
     });
     s.listen("127.0.0.1");
   }
