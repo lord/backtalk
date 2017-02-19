@@ -1,4 +1,4 @@
-use super::{JsonValue, Reply, Req, Resource};
+use super::{JsonValue, Reply, Req, Resource, Method};
 use ws;
 use tokio_core;
 use futures::future::{ok, err};
@@ -11,8 +11,65 @@ use hyper;
 use hyper::StatusCode;
 use hyper::header::ContentLength;
 use hyper::server as http;
-use ::req::{from_websocket_string, from_http_request};
 use std::sync::Arc;
+use queryst::parse as query_parse;
+use serde_json::Map;
+use serde_json;
+
+pub fn http_to_req(http_req: http::Request) -> Result<Req, Reply> {
+  fn err(err_str: &str) -> Result<Req, Reply> {
+    Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
+  }
+  {
+    let parts = http_req.path().split("/");
+    println!("meow: {:?}", parts);
+  }
+  println!("query: {:?}", http_req.query());
+  let query = match query_parse(http_req.query().unwrap_or("")) {
+    Ok(JsonValue::Null) => Map::new(),
+    Ok(JsonValue::Object(u)) => u,
+    _ => return err("failed to parse query string")
+  };
+  let req = Req::new(http_req.path().to_string(), Method::Get, Some("123".to_string()), JsonValue::Null, query);
+  Ok(req)
+}
+
+pub fn websocket_to_req(s: String, route: &str) -> Result<Req, Reply> {
+  fn err(err_str: &str) -> Result<Req, Reply> {
+    Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
+  }
+  let raw_dat = serde_json::from_str(&s);
+  let mut raw_iter = match raw_dat {
+    Ok(JsonValue::Array(a)) => a.into_iter(),
+    Ok(_) => return err("was not array error TODO"),
+    _ => return err("could not parse input as json TODO"),
+  };
+
+  // [method, params, id, data]
+  // id and data may be null, depending on the method
+  let method = match raw_iter.next() {
+    Some(JsonValue::String(s)) => s,
+    Some(_) => return err("method must be a string"),
+    None => return err("missing method in request"),
+  };
+  let params = match raw_iter.next() {
+    Some(JsonValue::Object(o)) => o,
+    Some(_) => return err("params must be an object"),
+    None => return err("missing params in request"), // TODO convert null to empty object
+  };
+  let id = match raw_iter.next() {
+    Some(JsonValue::String(s)) => Some(s),
+    Some(JsonValue::Null) => None,
+    Some(_) => return err("id must be a string or null"),
+    None => return err("missing id in request"), // TODO allow numeric ids
+  };
+  let data = match raw_iter.next() {
+    Some(o) => o,
+    None => return err("missing data in request"),
+  };
+
+  Ok(Req::new(route.to_string(), Method::from_str(method), id, data, params))
+}
 
 // only one is created
 #[derive(Clone)]
@@ -27,7 +84,7 @@ impl http::Service for HttpService {
   type Future = BoxFuture<http::Response, hyper::Error>;
 
   fn call(&self, http_req: http::Request) -> Self::Future {
-    let req = match from_http_request(http_req) {
+    let req = match http_to_req(http_req) {
       Ok(req) => req,
       Err(_) => {
         return ok(http::Response::new()
@@ -80,7 +137,7 @@ impl ws::Handler for WebSocketHandler {
       None => return Err(ws::Error::new(ws::ErrorKind::Internal, "route was unspecified")),
     };
     let out = self.sender.clone();
-    let req = match from_websocket_string(msg.to_string(), route_str) {
+    let req = match websocket_to_req(msg.to_string(), route_str) {
       Ok(req) => req,
       Err(e) => {
         return out.send(ws::Message::text(e.to_string()));

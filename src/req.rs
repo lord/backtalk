@@ -1,8 +1,4 @@
 use super::{Params, JsonValue, Reply};
-use serde_json;
-use hyper::server as http;
-use queryst::parse as query_parse;
-use serde_json::Map;
 
 #[derive(Debug)]
 pub enum Method {
@@ -17,7 +13,7 @@ pub enum Method {
 }
 
 impl Method {
-  fn from_str(s: String) -> Method {
+  pub fn from_str(s: String) -> Method {
     match s.as_str() {
       "list" => Method::List,
       "get" => Method::Get,
@@ -38,76 +34,17 @@ pub struct Req {
   method: Method,
 }
 
-pub fn from_http_request(http_req: http::Request) -> Result<Req, Reply> {
-  fn err(err_str: &str) -> Result<Req, Reply> {
-    Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
-  }
-  {
-    let parts = http_req.path().split("/");
-    println!("meow: {:?}", parts);
-  }
-  println!("query: {:?}", http_req.query());
-  let query = match query_parse(http_req.query().unwrap_or("")) {
-    Ok(JsonValue::Null) => Map::new(),
-    Ok(JsonValue::Object(u)) => u,
-    _ => return err("failed to parse query string")
-  };
-  let req = Req {
-    resource: http_req.path().to_string(),
-    method: Method::Get,
-    params: query,
-    id: Some("123".to_string()),
-    data: JsonValue::Null,
-  };
-  Ok(req)
-}
-
-pub fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
-  fn err(err_str: &str) -> Result<Req, Reply> {
-    Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
-  }
-  let raw_dat = serde_json::from_str(&s);
-  let mut raw_iter = match raw_dat {
-    Ok(JsonValue::Array(a)) => a.into_iter(),
-    Ok(_) => return err("was not array error TODO"),
-    _ => return err("could not parse input as json TODO"),
-  };
-
-  // [method, params, id, data]
-  // id and data may be null, depending on the method
-  let method = match raw_iter.next() {
-    Some(JsonValue::String(s)) => s,
-    Some(_) => return err("method must be a string"),
-    None => return err("missing method in request"),
-  };
-  let params = match raw_iter.next() {
-    Some(JsonValue::Object(o)) => o,
-    Some(_) => return err("params must be an object"),
-    None => return err("missing params in request"), // TODO convert null to empty object
-  };
-  let id = match raw_iter.next() {
-    Some(JsonValue::String(s)) => Some(s),
-    Some(JsonValue::Null) => None,
-    Some(_) => return err("id must be a string or null"),
-    None => return err("missing id in request"), // TODO allow numeric ids
-  };
-  let data = match raw_iter.next() {
-    Some(o) => o,
-    None => return err("missing data in request"),
-  };
-
-  let req = Req {
-    resource: route.to_string(),
-    method: Method::from_str(method),
-    params: params,
-    id: id,
-    data: data,
-  };
-
-  Ok(req)
-}
-
 impl Req {
+  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonValue, params: Params) -> Req {
+    Req {
+      resource: resource,
+      method: method,
+      id: id,
+      data: data,
+      params: params
+    }
+  }
+
   pub fn into_reply(self, code: i64, reply: JsonValue) -> Reply {
     Reply::new(code, Some(self), reply)
   }
