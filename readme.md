@@ -56,6 +56,8 @@ end
 
 // TODO: eventually should be https://docs.rs/futures/0.1/futures/future/trait.IntoFuture.html
 
+// TODO could a client continue the connection even after the 404? make sure not
+
 // don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
 
 // TODO be able to return a future of anything that can be IntoReply instead of just Reply?

@@ -35,14 +35,14 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
     let req = match Req::from_websocket_string(msg.to_string(), route_str) {
       Ok(req) => req,
       Err(e) => {
-        out.send(ws::Message::text(e.data.to_string()));
+        out.send(ws::Message::text(e.to_string()));
         return Ok(())
       }
     };
     let prom = self.server.handle(req).then(move |resp| {
       match resp {
-        Ok(s) => out.send(ws::Message::text(s.data.to_string())),
-        Err(s) => out.send(ws::Message::text(s.data.to_string())),
+        Ok(s) => out.send(ws::Message::text(s.to_string())),
+        Err(s) => out.send(ws::Message::text(s.to_string())),
       };
       ok(())
     });
@@ -96,4 +96,3 @@ impl Server {
     eloop.run(futures::future::empty::<(), ()>());
   }
 }
-

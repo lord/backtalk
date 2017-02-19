@@ -66,7 +66,7 @@ impl Req {
   // maybe a separate function, in this module, that lib.rs doesn't export
   pub fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
     fn err(err_str: &str) -> Result<Req, Reply> {
-      Err(Reply { code: 400, data: JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())]), req: None })
+      Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
     }
     let raw_dat = serde_json::from_str(&s);
     let mut raw_iter = match raw_dat {
