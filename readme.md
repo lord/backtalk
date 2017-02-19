@@ -16,11 +16,12 @@ Backtalk is a web framework for Rust. It's:
 A simple server example:
 
 ```rust
-let mut s = Server::new();
-let mut r = Resource::new(MemoryAdapter{});
-r.guard(backtalk::guards::hash("password", 10));
-s.mount("/hello", r);
-s.listen("127.0.0.1");
+let mut tasks = Resource::new(MemoryAdapter{});
+tasks.guard(Methods::Post, backtalk_validate::require("title"));
+
+let mut srv = Server::new();
+srv.mount("/tasks", tasks);
+srv.listen("127.0.0.1");
 ```
 
 ## Tasks
