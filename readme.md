@@ -28,8 +28,9 @@ srv.listen("127.0.0.1");
 
 - [x] add JSON parsing and serialization into Req and Reply objects
 - [x] add `Resource` trait with various methods
+- [ ] add http routing to server
 - [ ] add `Filter` and `Guard` traits
-- [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if 
+- [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if broadcasting events in a resource only broadcasted to other clients with the same params
 - [ ] broadcasting events to event listeners
 
 elixir shit:

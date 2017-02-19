@@ -7,12 +7,54 @@ use std::collections::HashMap;
 use tokio_core::reactor::Core;
 use std::thread;
 use futures;
+use hyper;
+use hyper::{Get, Post, StatusCode};
+use hyper::header::ContentLength;
+use hyper::server as http; //::{Http, Service, Request, Response};
+use futures::future::FutureResult;
 
+
+static INDEX: &'static [u8] = b"Try POST /echo";
+// only one is created
+#[derive(Clone, Copy)]
+struct HttpService<'a> {
+  server: &'a Server,
+}
+
+impl <'a> http::Service for HttpService<'a> {
+  type Request = http::Request;
+  type Response = http::Response;
+  type Error = hyper::Error;
+  type Future = FutureResult<http::Response, hyper::Error>;
+
+  fn call(&self, req: http::Request) -> Self::Future {
+    futures::future::ok(match (req.method(), req.path()) {
+      (&Get, "/") | (&Get, "/echo") => {
+        http::Response::new()
+          .with_header(ContentLength(INDEX.len() as u64))
+          .with_body(INDEX)
+      },
+      (&Post, "/echo") => {
+        let mut res = http::Response::new();
+        if let Some(len) = req.headers().get::<ContentLength>() {
+          res.headers_mut().set(len.clone());
+        }
+        res.with_body(req.body())
+      },
+      _ => {
+        http::Response::new()
+          .with_status(StatusCode::NotFound)
+      }
+    })
+  }
+}
+
+// one is created for each incoming connection
 struct WebSocketHandler<'a> {
-    sender: ws::Sender,
-    route: Option<String>, // TODO better routing method than strings, like maybe a route index or something
-    server: &'a Server,
-    eloop: tokio_core::reactor::Remote,
+  sender: ws::Sender,
+  route: Option<String>, // TODO better routing method than strings, like maybe a route index or something
+  server: &'a Server,
+  eloop: tokio_core::reactor::Remote,
 }
 
 impl <'a> ws::Handler for WebSocketHandler<'a> {
