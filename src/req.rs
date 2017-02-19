@@ -1,5 +1,8 @@
 use super::{Params, JsonValue, Reply};
 use serde_json;
+use hyper::server as http;
+use queryst::parse as query_parse;
+use serde_json::Map;
 
 #[derive(Debug)]
 pub enum Method {
@@ -33,6 +36,30 @@ pub struct Req {
   data: JsonValue,
   resource: String,
   method: Method,
+}
+
+pub fn from_http_request(http_req: http::Request) -> Result<Req, Reply> {
+  fn err(err_str: &str) -> Result<Req, Reply> {
+    Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
+  }
+  {
+    let parts = http_req.path().split("/");
+    println!("meow: {:?}", parts);
+  }
+  println!("query: {:?}", http_req.query());
+  let query = match query_parse(http_req.query().unwrap_or("")) {
+    Ok(JsonValue::Null) => Map::new(),
+    Ok(JsonValue::Object(u)) => u,
+    _ => return err("failed to parse query string")
+  };
+  let req = Req {
+    resource: http_req.path().to_string(),
+    method: Method::Get,
+    params: query,
+    id: None,
+    data: JsonValue::Null,
+  };
+  Ok(req)
 }
 
 pub fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {

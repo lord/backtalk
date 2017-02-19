@@ -1,21 +1,18 @@
 use super::{JsonValue, Reply, Req, Resource};
 use ws;
 use tokio_core;
-use futures::future::err;
+use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
 use tokio_core::reactor::Core;
 use std::thread;
 use futures;
 use hyper;
-use hyper::{Get, Post, StatusCode};
+use hyper::StatusCode;
 use hyper::header::ContentLength;
-use hyper::server as http; //::{Http, Service, Request, Response};
-use futures::future::FutureResult;
-use ::req::from_websocket_string;
+use hyper::server as http;
+use ::req::{from_websocket_string, from_http_request};
 
-
-static INDEX: &'static [u8] = b"Try POST /echo";
 // only one is created
 #[derive(Clone, Copy)]
 struct HttpService<'a> {
@@ -26,27 +23,34 @@ impl <'a> http::Service for HttpService<'a> {
   type Request = http::Request;
   type Response = http::Response;
   type Error = hyper::Error;
-  type Future = FutureResult<http::Response, hyper::Error>;
+  type Future = BoxFuture<http::Response, hyper::Error>;
 
-  fn call(&self, req: http::Request) -> Self::Future {
-    futures::future::ok(match (req.method(), req.path()) {
-      (&Get, "/") | (&Get, "/echo") => {
-        http::Response::new()
-          .with_header(ContentLength(INDEX.len() as u64))
-          .with_body(INDEX)
-      },
-      (&Post, "/echo") => {
-        let mut res = http::Response::new();
-        if let Some(len) = req.headers().get::<ContentLength>() {
-          res.headers_mut().set(len.clone());
-        }
-        res.with_body(req.body())
-      },
-      _ => {
-        http::Response::new()
-          .with_status(StatusCode::NotFound)
+  fn call(&self, http_req: http::Request) -> Self::Future {
+    let req = match from_http_request(http_req) {
+      Ok(req) => req,
+      Err(_) => {
+        return ok(http::Response::new()
+          .with_status(StatusCode::InternalServerError)).boxed()
       }
-    })
+    };
+    self.server.handle(req).then(move |resp| {
+      let http_resp = match resp {
+        Ok(s) => {
+          let resp_str = s.to_string();
+          http::Response::new()
+            .with_header(ContentLength(resp_str.len() as u64))
+            .with_body(resp_str)
+        }
+        Err(s) => {
+          let resp_str = s.to_string();
+          http::Response::new()
+            .with_status(StatusCode::NotFound) // TODO MAKE THIS A PROPER STATUS CODE
+            .with_header(ContentLength(resp_str.len() as u64))
+            .with_body(resp_str)
+        },
+      };
+      Ok(http_resp)
+    }).boxed()
   }
 }
 
@@ -126,6 +130,12 @@ impl Server {
     let mut eloop = Core::new().unwrap();
     let addr: String = bind_addr.into();
     let eloop_remote = eloop.remote();
+    // let http_addr = (addr + ":3333").as_str().parse().unwrap();
+    // thread::spawn(move || {
+    //   let server = http::Http::new().bind(&http_addr, || Ok(HttpService{server: &self})).unwrap();
+    //   println!("Listening on http://{} with 1 thread.", server.local_addr().unwrap());
+    //   server.run().unwrap();
+    // });
     thread::spawn(move || {
       let server = &self;
       ws::listen((addr + ":3333").as_str(), |out| {
