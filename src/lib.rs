@@ -153,17 +153,13 @@ struct WebSocketHandler<'a> {
 
 impl <'a> ws::Handler for WebSocketHandler<'a> {
   fn on_request(&mut self, req: &ws::Request) -> ws::Result<ws::Response> {
-    match req.resource() {
-      "/one" => self.route = Some("/one".to_string()),
-      "/two" => self.route = Some("/two".to_string()),
-
-      _ => {
-        let mut resp = ws::Response::from_request(req)?;
-        resp.set_status(404);
-        return Ok(resp);
-      },
+    let mut resp = ws::Response::from_request(req)?;
+    if self.server.has_resource(req.resource()) {
+      self.route = Some(req.resource().to_string());
+    } else {
+      resp.set_status(404);
     }
-    ws::Response::from_request(req)
+    Ok(resp)
   }
 
   fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
@@ -202,6 +198,10 @@ impl Server {
     Server{
       route_table: HashMap::new()
     }
+  }
+
+  fn has_resource(&self, s: &str) -> bool {
+    self.route_table.get(s).is_some()
   }
 
   pub fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
@@ -279,6 +279,35 @@ impl Resource {
   }
 }
 
+struct MemoryAdapter {}
+
+impl Adapter for MemoryAdapter {
+  fn find(&self, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
+    // TODO
+    unimplemented!()
+  }
+
+  fn get(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
+    // TODO
+    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
+  }
+
+  fn post(&self, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
+    // TODO
+    unimplemented!()
+  }
+
+  fn patch(&self, id: &str, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
+    // TODO
+    unimplemented!()
+  }
+
+  fn delete(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
+    // TODO
+    unimplemented!()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -286,10 +315,8 @@ mod tests {
   #[test]
   fn it_works() {
     let mut s = Server::new();
-    // s.route(|req| {
-    //   let reply_str = format!("backtalk echo: {:?}", &req);
-    //   ok(req.into_reply(200, JsonValue::Array(vec![JsonValue::String(reply_str)]))).boxed()
-    // });
+    let mut r = Resource::new(MemoryAdapter{});
+    s.mount("/hello", r);
     s.listen("127.0.0.1");
   }
 }
