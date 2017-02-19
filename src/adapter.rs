@@ -4,7 +4,7 @@ use futures::future::ok;
 use serde_json::Value as JsonValue;
 
 // TODO maybe allow adapters to have data be any serializable object? So the trait would have a generic
-pub trait Adapter: Send {
+pub trait Adapter: Send + Sync {
   fn find(&self, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
   fn get(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
   fn post(&self, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;

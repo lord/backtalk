@@ -12,14 +12,15 @@ use hyper::StatusCode;
 use hyper::header::ContentLength;
 use hyper::server as http;
 use ::req::{from_websocket_string, from_http_request};
+use std::sync::Arc;
 
 // only one is created
-#[derive(Clone, Copy)]
-struct HttpService<'a> {
-  server: &'a Server,
+#[derive(Clone)]
+struct HttpService {
+  server: Arc<Server>,
 }
 
-impl <'a> http::Service for HttpService<'a> {
+impl http::Service for HttpService {
   type Request = http::Request;
   type Response = http::Response;
   type Error = hyper::Error;
@@ -55,14 +56,14 @@ impl <'a> http::Service for HttpService<'a> {
 }
 
 // one is created for each incoming connection
-struct WebSocketHandler<'a> {
+struct WebSocketHandler {
   sender: ws::Sender,
   route: Option<String>, // TODO better routing method than strings, like maybe a route index or something
-  server: &'a Server,
+  server: Arc<Server>,
   eloop: tokio_core::reactor::Remote,
 }
 
-impl <'a> ws::Handler for WebSocketHandler<'a> {
+impl ws::Handler for WebSocketHandler {
   fn on_request(&mut self, req: &ws::Request) -> ws::Result<ws::Response> {
     let mut resp = ws::Response::from_request(req)?;
     if self.server.has_resource(req.resource()) {
@@ -130,20 +131,24 @@ impl Server {
     let mut eloop = Core::new().unwrap();
     let addr: String = bind_addr.into();
     let eloop_remote = eloop.remote();
-    // let http_addr = (addr + ":3333").as_str().parse().unwrap();
-    // thread::spawn(move || {
-    //   let server = http::Http::new().bind(&http_addr, || Ok(HttpService{server: &self})).unwrap();
-    //   println!("Listening on http://{} with 1 thread.", server.local_addr().unwrap());
-    //   server.run().unwrap();
-    // });
+    let http_addr = (addr.clone() + ":3334").as_str().parse().unwrap();
+    let server_arc = Arc::new(self);
+    let server_clone = server_arc.clone();
     thread::spawn(move || {
-      let server = &self;
+      let server = http::Http::new().bind(&http_addr, move || {
+        Ok(HttpService{server: (&server_clone).clone()})
+      }).unwrap();
+      println!("Listening on http://{} with 1 thread.", server.local_addr().unwrap());
+      server.run().unwrap();
+    });
+    let server_clone = server_arc.clone();
+    thread::spawn(move || {
       ws::listen((addr + ":3333").as_str(), |out| {
         return WebSocketHandler {
           sender: out.clone(),
           route: None,
           eloop: eloop_remote.clone(),
-          server: server,
+          server: (&server_clone).clone(),
         };
       })
     });

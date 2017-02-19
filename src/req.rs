@@ -56,7 +56,7 @@ pub fn from_http_request(http_req: http::Request) -> Result<Req, Reply> {
     resource: http_req.path().to_string(),
     method: Method::Get,
     params: query,
-    id: None,
+    id: Some("123".to_string()),
     data: JsonValue::Null,
   };
   Ok(req)
