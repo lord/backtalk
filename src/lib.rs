@@ -14,44 +14,12 @@ use std::collections::HashMap;
 
 type Params = Map<String, JsonValue>;
 
-// defmodule HelloPhoenix.RoomChannel do
-//   use Phoenix.Channel
-
-//   def join("room:lobby", _message, socket) do
-//     {:ok, socket}
-//   end
-//   def join("room:" <> _private_room_id, _params, _socket) do
-//     {:error, %{reason: "unauthorized"}}
-//   end
-
-//   def handle_in("new_msg", %{"body" => body}, socket) do
-//     broadcast! socket, "new_msg", %{body: body}
-//     {:noreply, socket}
-//   end
-
-//   def handle_out("new_msg", payload, socket) do
-//     push socket, "new_msg", payload
-//     {:noreply, socket}
-//   end
-// end
-
-// TODO: eventually should be https://docs.rs/futures/0.1/futures/future/trait.IntoFuture.html
-
-// don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
-
-// TODO be able to return a future of anything that can be IntoReply instead of just Reply?
-
-// TODO I think macros can help with reducing usage of BoxFuture which is slower?
-//      it would be cool if we used futures in a zero-cost way
-//      also, it would be nice if we didn't have to write ok(fut).boxed() everywhere
-//      see Rocket for inspiration
-
 #[derive(Debug)]
 pub struct Req {
   id: Option<String>,
   params: Params,
   data: JsonValue,
-  resource: String, // TODO should routes be strings?
+  resource: String,
   method: Method,
 }
 
@@ -123,8 +91,6 @@ impl Req {
       None => return err("missing data in request"),
     };
 
-    // TODO check that the right things are present
-
     let req = Req {
       resource: route.to_string(),
       method: Method::from_str(method),
@@ -187,8 +153,6 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
   }
 }
 
-// TODO proper routing
-
 pub struct Server {
   route_table: HashMap<String, Resource>
 }
@@ -237,7 +201,7 @@ impl Server {
 
 // TODO could a client continue the connection even after the 404? make sure not
 
-// TODO maybe allow adapters to have data be any serializable object?
+// TODO maybe allow adapters to have data be any serializable object? So the trait would have a generic
 
 trait Adapter: Send {
   fn find(&self, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;

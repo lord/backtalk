@@ -27,9 +27,43 @@ srv.listen("127.0.0.1");
 ## Tasks
 
 - [x] add JSON parsing and serialization into Req and Reply objects
-- [ ] add `Resource` trait with various methods
+- [x] add `Resource` trait with various methods
 - [ ] add `Filter` and `Guard` traits
-- [ ] add proper routing to `Server`
+- [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if 
+- [ ] broadcasting events to event listeners
+
+elixir shit:
+
+```elixir
+defmodule HelloPhoenix.RoomChannel do
+  use Phoenix.Channel
+  def join("room:lobby", _message, socket) do
+    {:ok, socket}
+  end
+  def join("room:" <> _private_room_id, _params, _socket) do
+    {:error, %{reason: "unauthorized"}}
+  end
+  def handle_in("new_msg", %{"body" => body}, socket) do
+    broadcast! socket, "new_msg", %{body: body}
+    {:noreply, socket}
+  end
+  def handle_out("new_msg", payload, socket) do
+    push socket, "new_msg", payload
+    {:noreply, socket}
+  end
+end
+```
+
+// TODO: eventually should be https://docs.rs/futures/0.1/futures/future/trait.IntoFuture.html
+
+// don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
+
+// TODO be able to return a future of anything that can be IntoReply instead of just Reply?
+
+// TODO I think macros can help with reducing usage of BoxFuture which is slower?
+//      it would be cool if we used futures in a zero-cost way
+//      also, it would be nice if we didn't have to write ok(fut).boxed() everywhere
+//      see Rocket for inspiration
 
 ## Objects
 
