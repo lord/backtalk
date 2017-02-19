@@ -10,6 +10,9 @@ use tokio_core::reactor::Core;
 use std::thread;
 use serde_json::Value as JsonValue;
 use serde_json::value::Map;
+use std::collections::HashMap;
+
+type Params = Map<String, JsonValue>;
 
 // defmodule HelloPhoenix.RoomChannel do
 //   use Phoenix.Channel
@@ -46,7 +49,7 @@ use serde_json::value::Map;
 #[derive(Debug)]
 pub struct Req {
   id: Option<String>,
-  params: Map<String, JsonValue>,
+  params: Params,
   data: JsonValue,
   resource: String, // TODO should routes be strings?
   method: Method,
@@ -78,12 +81,12 @@ impl Method {
 }
 
 impl Req {
-  fn into_reply(self, code: i64, reply: JsonValue) -> BoxFuture<Reply, Reply> {
-    ok(Reply {
+  fn into_reply(self, code: i64, reply: JsonValue) -> Reply {
+    Reply {
       code: code,
       data: reply,
       req: Some(self),
-    }).boxed()
+    }
   }
 
   fn from_websocket_string(s: String, route: &str) -> Result<Req, Reply> {
@@ -169,43 +172,48 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
       None => return Err(ws::Error::new(ws::ErrorKind::Internal, "route was unspecified")),
     };
     let out = self.sender.clone();
-    match self.server.route_table {
-      Some(ref f) => {
-        let req = match Req::from_websocket_string(msg.to_string(), route_str) {
-          Ok(req) => req,
-          Err(e) => {
-            out.send(ws::Message::text(e.data.to_string()));
-            return Ok(())
-          }
-        };
-        let prom = f(req).then(move |resp| {
-          match resp {
-            Ok(s) => out.send(ws::Message::text(s.data.to_string())),
-            Err(s) => out.send(ws::Message::text(s.data.to_string())),
-          };
-          ok(())
-        });
-        self.eloop.spawn(|_| prom);
-      },
-      None => unimplemented!(),
-    }
+    let req = match Req::from_websocket_string(msg.to_string(), route_str) {
+      Ok(req) => req,
+      Err(e) => {
+        out.send(ws::Message::text(e.data.to_string()));
+        return Ok(())
+      }
+    };
+    let prom = self.server.handle(req).then(move |resp| {
+      match resp {
+        Ok(s) => out.send(ws::Message::text(s.data.to_string())),
+        Err(s) => out.send(ws::Message::text(s.data.to_string())),
+      };
+      ok(())
+    });
+    self.eloop.spawn(|_| prom);
     Ok(())
   }
 }
 
+// TODO proper routing
+
 pub struct Server {
-  route_table: Option<Box<Fn(Req) -> BoxFuture<Reply, Reply> + Send>>
+  route_table: HashMap<String, Resource>
 }
 
 impl Server {
   pub fn new() -> Server {
-    let s = Server{route_table: None};
-    s
+    Server{
+      route_table: HashMap::new()
+    }
   }
 
-  pub fn route<T>(&mut self, r: T)
-    where T: Fn(Req) -> BoxFuture<Reply, Reply> + 'static + Send {
-    self.route_table = Some(Box::new(r));
+  pub fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
+    // TODO maybe instead do some sort of indexing instead of all this string hashing, so like, the webhooks calls get_route_ref or something
+    match self.route_table.get(&req.resource) {
+      Some(resource) => resource.handle(req),
+      None => err(req.into_reply(404, JsonValue::String("TODO not found error here".to_string()))).boxed()
+    }
+  }
+
+  pub fn mount<T: Into<String>>(&mut self, route: T, resource: Resource) {
+    self.route_table.insert(route.into(), resource);
   }
 
   pub fn listen<T: Into<String> + Send + 'static>(self, bind_addr: T) {
@@ -229,18 +237,59 @@ impl Server {
 
 // TODO could a client continue the connection even after the 404? make sure not
 
+// TODO maybe allow adapters to have data be any serializable object?
+
+trait Adapter: Send {
+  fn find(&self, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
+  fn get(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
+  fn post(&self, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
+  fn patch(&self, id: &str, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
+  fn delete(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
+}
+
+pub struct Resource {
+  adapter: Box<Adapter>,
+}
+
+impl Resource {
+  fn new<T: Adapter + 'static + Send>(adapt: T) -> Resource {
+    Resource {
+      adapter: Box::new(adapt),
+    }
+  }
+
+  fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
+    fn make_err(err_str: &str) -> BoxFuture<Reply, Reply> {
+      err(Reply { code: 400, data: JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())]), req: None }).boxed()
+    }
+    let res = match (&req.method, &req.id) {
+      (&Method::List, _) => self.adapter.find(&req.params),
+      (&Method::Post, _) => self.adapter.post(&req.data, &req.params),
+      (&Method::Get, &Some(ref id)) => self.adapter.get(id, &req.params),
+      (&Method::Delete, &Some(ref id)) => self.adapter.delete(id, &req.params),
+      (&Method::Patch, &Some(ref id)) => self.adapter.patch(id, &req.data, &req.params),
+      (&Method::Action(_), _) => unimplemented!(),
+      (_, &None) => return make_err("missing id in request"),
+    };
+
+    res.then(|res| match res {
+      Ok(val) => Ok(req.into_reply(200, val)),
+      Err((code, val)) => Err(req.into_reply(code, val)),
+    }).boxed()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
-  use futures;
 
   #[test]
   fn it_works() {
     let mut s = Server::new();
-    s.route(|req| {
-      let reply_str = format!("backtalk echo: {:?}", &req);
-      req.into_reply(200, JsonValue::Array(vec![JsonValue::String(reply_str)]))
-    });
+    // s.route(|req| {
+    //   let reply_str = format!("backtalk echo: {:?}", &req);
+    //   ok(req.into_reply(200, JsonValue::Array(vec![JsonValue::String(reply_str)]))).boxed()
+    // });
     s.listen("127.0.0.1");
   }
 }
