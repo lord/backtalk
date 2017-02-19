@@ -13,6 +13,16 @@ Backtalk is a web framework for Rust. It's:
 - **Simple** – minimalist tools, easily composed.
 - **Opinionated** – exclusively for rapidly building JSON-based RESTful APIs.
 
+A simple server example:
+
+```rust
+let mut s = Server::new();
+let mut r = Resource::new(MemoryAdapter{});
+r.guard(backtalk::guards::hash("password", 10));
+s.mount("/hello", r);
+s.listen("127.0.0.1");
+```
+
 ## Tasks
 
 - [x] add JSON parsing and serialization into Req and Reply objects
