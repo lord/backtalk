@@ -12,6 +12,7 @@ use hyper::{Get, Post, StatusCode};
 use hyper::header::ContentLength;
 use hyper::server as http; //::{Http, Service, Request, Response};
 use futures::future::FutureResult;
+use ::req::from_websocket_string;
 
 
 static INDEX: &'static [u8] = b"Try POST /echo";
@@ -74,7 +75,7 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
       None => return Err(ws::Error::new(ws::ErrorKind::Internal, "route was unspecified")),
     };
     let out = self.sender.clone();
-    let req = match Req::from_websocket_string(msg.to_string(), route_str) {
+    let req = match from_websocket_string(msg.to_string(), route_str) {
       Ok(req) => req,
       Err(e) => {
         return out.send(ws::Message::text(e.to_string()));
