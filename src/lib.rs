@@ -4,8 +4,7 @@ extern crate tokio_core;
 extern crate serde_json;
 
 use futures::{BoxFuture, Future};
-use futures::future::IntoFuture;
-use futures::future::{ok, err, FutureResult};
+use futures::future::{ok, err};
 use serde_json::Value as JsonValue;
 use serde_json::value::Map;
 

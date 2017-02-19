@@ -1,8 +1,7 @@
-use super::{Params, JsonValue, Reply, Req, Resource};
-use serde_json;
+use super::{JsonValue, Reply, Req, Resource};
 use ws;
 use tokio_core;
-use futures::future::{ok, err, FutureResult};
+use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
 use tokio_core::reactor::Core;
