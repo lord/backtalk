@@ -2,15 +2,6 @@ use super::{Params, JsonValue, Reply};
 use serde_json;
 
 #[derive(Debug)]
-pub struct Req {
-  id: Option<String>,
-  params: Params,
-  data: JsonValue,
-  resource: String,
-  method: Method,
-}
-
-#[derive(Debug)]
 pub enum Method {
   // indempotent methods (must be able to call many times and it'll have the same effect/return value as just once)
   List, // -> GET /resource
@@ -33,6 +24,15 @@ impl Method {
       _ => Method::Action(s),
     }
   }
+}
+
+#[derive(Debug)]
+pub struct Req {
+  id: Option<String>,
+  params: Params,
+  data: JsonValue,
+  resource: String,
+  method: Method,
 }
 
 impl Req {
