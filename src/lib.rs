@@ -20,7 +20,7 @@ mod adapter;
 pub use adapter::{Adapter, MemoryAdapter}; // TODO memory adapter should probably eventually go in its own crate
 
 mod resource;
-pub use resource::{Resource}; // TODO memory adapter should probably eventually go in its own crate
+pub use resource::{Resource};
 
 #[cfg(test)]
 mod tests {
@@ -29,7 +29,7 @@ mod tests {
   #[test]
   fn it_works() {
     let mut s = Server::new();
-    let mut r = Resource::new(MemoryAdapter{});
+    let r = Resource::new(MemoryAdapter{});
     s.mount("/hello", r);
     s.listen("127.0.0.1");
   }

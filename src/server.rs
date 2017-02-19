@@ -1,7 +1,7 @@
 use super::{JsonValue, Reply, Req, Resource};
 use ws;
 use tokio_core;
-use futures::future::{ok, err};
+use futures::future::err;
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
 use tokio_core::reactor::Core;
@@ -35,16 +35,17 @@ impl <'a> ws::Handler for WebSocketHandler<'a> {
     let req = match Req::from_websocket_string(msg.to_string(), route_str) {
       Ok(req) => req,
       Err(e) => {
-        out.send(ws::Message::text(e.to_string()));
-        return Ok(())
+        return out.send(ws::Message::text(e.to_string()));
       }
     };
     let prom = self.server.handle(req).then(move |resp| {
       match resp {
         Ok(s) => out.send(ws::Message::text(s.to_string())),
         Err(s) => out.send(ws::Message::text(s.to_string())),
-      };
-      ok(())
+      }
+    }).map_err(|e| {
+      println!("TODO HANDLE ERROR: {:?}", e);
+      ()
     });
     self.eloop.spawn(|_| prom);
     Ok(())
@@ -93,6 +94,6 @@ impl Server {
         };
       })
     });
-    eloop.run(futures::future::empty::<(), ()>());
+    eloop.run(futures::future::empty::<(), ()>()).unwrap();
   }
 }
