@@ -17,7 +17,7 @@ pub struct MemoryAdapter {}
 impl Adapter for MemoryAdapter {
   fn find(&self, _params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
     // TODO
-    unimplemented!()
+    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
   fn get(&self, _id: &str, _params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
@@ -27,16 +27,16 @@ impl Adapter for MemoryAdapter {
 
   fn post(&self, _data: &JsonValue, _params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
     // TODO
-    unimplemented!()
+    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
   fn patch(&self, _id: &str, _data: &JsonValue, _params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
     // TODO
-    unimplemented!()
+    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
   fn delete(&self, _id: &str, _params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
     // TODO
-    unimplemented!()
+    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 }
