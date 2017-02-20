@@ -51,33 +51,85 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Ve
     parts.pop();
   }
 
-  let all_url = format!("/{}", parts.join("/"));
-  if method == &HttpMethod::Get && server.has_resource(&all_url) {
-    return Ok(Req::new(
-      all_url,
-      Method::List,
-      None,
-      JsonValue::Null,
-      query
-    ))
-  } else if method == &HttpMethod::Post && server.has_resource(&all_url) {
-    return Ok(Req::new(
-      all_url,
-      Method::Post,
-      None,
-      body_obj,
-      query
-    ))
-  } else {
-    // TODO TEMP
-    return Ok(Req::new(
-      all_url,
-      Method::Post,
-      None,
-      body_obj,
-      query
-    ))
+  let resource_url = format!("/{}", parts.join("/"));
+  if server.has_resource(&resource_url) {
+    if method == &HttpMethod::Get {
+      return Ok(Req::new(
+        resource_url,
+        Method::List,
+        None,
+        JsonValue::Null,
+        query
+      ))
+    } else if method == &HttpMethod::Post {
+      return Ok(Req::new(
+        resource_url,
+        Method::Post,
+        None,
+        body_obj,
+        query
+      ))
+    } else {
+      return err("TODO invalid http method")
+    }
   }
+
+  let (id, parts) = match parts.split_last() {
+    Some(t) => t,
+    None => return err("TODO 404 not found")
+  };
+  let resource_url = format!("/{}", parts.join("/"));
+  if server.has_resource(&resource_url) {
+    if method == &HttpMethod::Get {
+      return Ok(Req::new(
+        resource_url,
+        Method::Get,
+        Some(id.to_string()),
+        JsonValue::Null,
+        query
+      ))
+    } else if method == &HttpMethod::Patch {
+      return Ok(Req::new(
+        resource_url,
+        Method::Patch,
+        Some(id.to_string()),
+        body_obj,
+        query
+      ))
+    } else if method == &HttpMethod::Delete {
+      return Ok(Req::new(
+        resource_url,
+        Method::Delete,
+        Some(id.to_string()),
+        JsonValue::Null,
+        query
+      ))
+    } else {
+      return err("TODO invalid http method")
+    }
+  }
+
+  let action_name = id;
+  let (id, parts) = match parts.split_last() {
+    Some(t) => t,
+    None => return err("TODO 404 not found")
+  };
+  let resource_url = format!("/{}", parts.join("/"));
+  if server.has_resource(&resource_url) {
+    if method == &HttpMethod::Post {
+      return Ok(Req::new(
+        resource_url,
+        Method::Action(action_name.to_string()),
+        Some(id.to_string()),
+        JsonValue::Null,
+        query
+      ))
+    } else {
+      return err("TODO invalid http method")
+    }
+  }
+
+  err("404 resource not found")
 }
 
 pub fn websocket_to_req(s: String, route: &str) -> Result<Req, Reply> {
