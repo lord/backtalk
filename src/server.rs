@@ -11,27 +11,73 @@ use hyper;
 use hyper::StatusCode;
 use hyper::header::ContentLength;
 use hyper::server as http;
+use hyper::Method as HttpMethod;
+use futures::Stream;
+use futures::future::FutureResult;
 use std::sync::Arc;
 use queryst::parse as query_parse;
 use serde_json::Map;
 use serde_json;
 
-pub fn http_to_req(http_req: http::Request) -> Result<Req, Reply> {
+pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
   fn err(err_str: &str) -> Result<Req, Reply> {
     Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
   }
-  {
-    let parts = http_req.path().split("/");
-    println!("meow: {:?}", parts);
-  }
-  println!("query: {:?}", http_req.query());
-  let query = match query_parse(http_req.query().unwrap_or("")) {
+  let body = if let Some(b) = body {
+    b
+  } else {
+    return err("TODO error in request body");
+  };
+  let body_str = match String::from_utf8(body) {
+    Ok(s) => s,
+    _ => return err("TODO invalid unicode in request body"),
+  };
+  let body_obj = if body_str == "" {
+    JsonValue::Null
+  } else {
+    match serde_json::from_str(&body_str) {
+      Ok(o) => o,
+      _ => return err("TODO invalid JSON in request body"),
+    }
+  };
+  let query = match query_parse(query) {
     Ok(JsonValue::Null) => Map::new(),
     Ok(JsonValue::Object(u)) => u,
     _ => return err("failed to parse query string")
   };
-  let req = Req::new(http_req.path().to_string(), Method::Get, Some("123".to_string()), JsonValue::Null, query);
-  Ok(req)
+  let mut parts: Vec<&str> = path.split("/").skip(1).collect();
+  // remove trailing `/` part if present
+  if let Some(&"") = parts.last() {
+    parts.pop();
+  }
+
+  let all_url = format!("/{}", parts.join("/"));
+  if method == &HttpMethod::Get && server.has_resource(&all_url) {
+    return Ok(Req::new(
+      all_url,
+      Method::List,
+      None,
+      JsonValue::Null,
+      query
+    ))
+  } else if method == &HttpMethod::Post && server.has_resource(&all_url) {
+    return Ok(Req::new(
+      all_url,
+      Method::Post,
+      None,
+      body_obj,
+      query
+    ))
+  } else {
+    // TODO TEMP
+    return Ok(Req::new(
+      all_url,
+      Method::Post,
+      None,
+      body_obj,
+      query
+    ))
+  }
 }
 
 pub fn websocket_to_req(s: String, route: &str) -> Result<Req, Reply> {
@@ -84,14 +130,18 @@ impl http::Service for HttpService {
   type Future = BoxFuture<http::Response, hyper::Error>;
 
   fn call(&self, http_req: http::Request) -> Self::Future {
-    let req = match http_to_req(http_req) {
-      Ok(req) => req,
-      Err(_) => {
-        return ok(http::Response::new()
-          .with_status(StatusCode::InternalServerError)).boxed()
+    let method = http_req.method().clone();
+    let path = http_req.path().to_string();
+    let query = http_req.query().unwrap_or("").to_string();
+    let server = self.server.clone();
+    let body_prom = http_req.body().fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
+
+    body_prom.then(move |body_res| {
+      match http_to_req(&method, &path, &query, body_res.ok(), &server) {
+        Ok(req) => server.handle(req),
+        Err(reply) => err(reply).boxed(),
       }
-    };
-    self.server.handle(req).then(move |resp| {
+    }).then(|resp| -> BoxFuture<hyper::server::Response, hyper::Error> {
       let http_resp = match resp {
         Ok(s) => {
           let resp_str = s.to_string();
@@ -107,7 +157,7 @@ impl http::Service for HttpService {
             .with_body(resp_str)
         },
       };
-      Ok(http_resp)
+      ok(http_resp).boxed()
     }).boxed()
   }
 }
