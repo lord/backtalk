@@ -37,9 +37,6 @@ impl Resource {
       req = req.and_then(move |req| hook.handle(req)).boxed();
     }
 
-    // TODO: THE PROBLEM WITH THIS CODE IS THAT THIS CLOSURES
-    // MIGHT OUTLIVE SELF, which is a problem for both self.adapter and self.before and self.after hooks
-
     let adapter = self.adapter.clone();
 
     let mut reply = req.and_then(move |req| {

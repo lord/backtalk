@@ -4,6 +4,7 @@ use futures::future::ok;
 use serde_json::Value as JsonValue;
 
 // TODO maybe allow adapters to have data be any serializable object? So the trait would have a generic
+// TODO have a better way of doing this than just clone, but a system that still will 
 pub trait Adapter: Send + Sync {
   fn find(&self, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
   fn get(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
@@ -12,6 +13,7 @@ pub trait Adapter: Send + Sync {
   fn delete(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
 }
 
+#[derive(Clone)]
 pub struct MemoryAdapter {}
 
 impl Adapter for MemoryAdapter {

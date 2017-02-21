@@ -32,8 +32,10 @@ srv.listen("127.0.0.1");
 - [ ] add `Filter` and `Guard` traits
 - [ ] broadcasting events to event listeners
 
-## Debts (non API breaking things that should be fixed)
+## Debts (non API breaking things that should be fixed anyway)
 
+- [ ] the code is slow as shit because there are shared locks everywhere in the form of `Arc`s. should ask about passing references to a future, it's not like they need mutable access or anything. but getting rid of the arcs sped up the code 2x in a 2000-parallel-connection load test
+- [ ] the other reason it is slow is because of all the `boxed` allocations. should ask if it's possible to remove those. maybe do a test first to see if you don't assemble from the Vec dynamically if it will compile with only a single box? may be able to speed up all the code with macros. and eventually, maybe could do some sort of recursion to avoid boxes. maybe. eh. not quite sure.
 - [ ] server.rs should be split up and refactored
 - [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if broadcasting events in a resource only broadcasted to other clients with the same params
 
