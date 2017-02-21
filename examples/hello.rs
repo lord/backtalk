@@ -3,7 +3,7 @@ extern crate futures;
 
 use backtalk::*;
 use futures::{BoxFuture, Future};
-use futures::future::{ok, err};
+use futures::future::ok;
 
 struct MyHook;
 impl BeforeHook for MyHook {

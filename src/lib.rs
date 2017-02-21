@@ -24,27 +24,12 @@ pub use adapter::{Adapter, MemoryAdapter}; // TODO memory adapter should probabl
 mod resource;
 pub use resource::{Resource, BeforeHook, AfterHook};
 
+mod channel;
+pub use channel::{Channel};
+
 #[cfg(test)]
 mod tests {
-  use super::*;
-  use futures::{BoxFuture, Future};
-  use futures::future::{ok, err};
-
-  struct MyHook;
-  impl BeforeHook for MyHook {
-    fn handle(&self, req: Req) -> BoxFuture<Req, Reply> {
-      ok(req).boxed()
-    }
-  }
-
   #[test]
   fn it_works() {
-    let mut s = Server::new();
-    let mut r = Resource::new(MemoryAdapter{});
-    // for _ in 0..1000 {
-    //   r.before(MyHook{});
-    // }
-    s.mount("/hello", r);
-    s.listen("127.0.0.1");
   }
 }

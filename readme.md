@@ -29,8 +29,8 @@ srv.listen("127.0.0.1");
 - [x] add JSON parsing and serialization into Req and Reply objects
 - [x] add `Resource` trait with various methods
 - [x] add http routing to server
-- [ ] add `Filter` and `Guard` traits
-- [ ] broadcasting events to event listeners
+- [x] add `BeforeHook` and `AfterHook` traits
+- [ ] broadcasting events to event listeners with a `Channel` trait
 
 ## Debts (non API breaking things that should be fixed anyway)
 
@@ -38,28 +38,6 @@ srv.listen("127.0.0.1");
 - [ ] the other reason it is slow is because of all the `boxed` allocations. should ask if it's possible to remove those. maybe do a test first to see if you don't assemble from the Vec dynamically if it will compile with only a single box? may be able to speed up all the code with macros. and eventually, maybe could do some sort of recursion to avoid boxes. maybe. eh. not quite sure.
 - [ ] server.rs should be split up and refactored
 - [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if broadcasting events in a resource only broadcasted to other clients with the same params
-
-elixir shit:
-
-```elixir
-defmodule HelloPhoenix.RoomChannel do
-  use Phoenix.Channel
-  def join("room:lobby", _message, socket) do
-    {:ok, socket}
-  end
-  def join("room:" <> _private_room_id, _params, _socket) do
-    {:error, %{reason: "unauthorized"}}
-  end
-  def handle_in("new_msg", %{"body" => body}, socket) do
-    broadcast! socket, "new_msg", %{body: body}
-    {:noreply, socket}
-  end
-  def handle_out("new_msg", payload, socket) do
-    push socket, "new_msg", payload
-    {:noreply, socket}
-  end
-end
-```
 
 // TODO: eventually should be https://docs.rs/futures/0.1/futures/future/trait.IntoFuture.html
 
