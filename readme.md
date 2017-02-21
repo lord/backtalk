@@ -30,6 +30,7 @@ srv.listen("127.0.0.1");
 - [x] add `Resource` trait with various methods
 - [x] add http routing to server
 - [x] add `BeforeHook` and `AfterHook` traits
+- [ ] implement https://github.com/socketio/engine.io-protocol and https://github.com/socketio/socket.io-protocol in Rust
 - [ ] broadcasting events to event listeners with a `Channel` trait
 
 ## Debts (non API breaking things that should be fixed anyway)
