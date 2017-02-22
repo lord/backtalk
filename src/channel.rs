@@ -6,7 +6,7 @@ use ::JsonValue;
 // also maybe would be nice to be able to store authentication information somewhere here
 
 pub trait Channel {
-  fn join(Sender);
-  fn leave(Sender);
-  fn handle(JsonValue);
+  fn join(&self, Sender);
+  fn leave(&self, Sender);
+  fn handle(&self, JsonValue);
 }

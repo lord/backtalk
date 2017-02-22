@@ -24,6 +24,15 @@ srv.mount("/tasks", tasks);
 srv.listen("127.0.0.1");
 ```
 
+## Why SEE instead of websockets?
+
+- SSE works automatically over our existing SSL
+- SSE works over HTTP/2. Websockets does not.
+- SSE has reconnection and message replay/catchup built in to it automatically
+- websockets supports requests in both directions, but we can just AJAX it
+  - we'd worry about AJAX overhead, but thanks to HTTP/2, that's not a concern
+- once Hyper supports HTTP/2, we'll have built-in multiplexing over a single TCP connection handled by the browser
+
 ## Things
 
 - `Resource` is an object that receives requests. Usually corresponds to a particular type of object. Allows adding hooks.
