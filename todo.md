@@ -4,14 +4,17 @@
 - [x] add `Resource` trait with various methods
 - [x] add http routing to server
 - [x] add `BeforeHook` and `AfterHook` traits
-- [ ] look at https://github.com/socketio/engine.io-protocol and https://github.com/socketio/socket.io-protocol for protocol inspiration
 - [ ] broadcasting events to event listeners with a `Channel` trait
+- [ ] look at https://github.com/socketio/engine.io-protocol and https://github.com/socketio/socket.io-protocol for protocol inspiration. would be nice to have multiplexing
+  - [ ] how difficult to just implement engine.io?
+  - [ ] jsonp polling will be a bit difficult, but it's also a good idea for people with less high quality connections. maybe do HTTP for all non event stuff, and just websockets for events broadcasted for now. abstract the API so we can seemlessly swap it out later.
 - [ ] better errors
 - [ ] implement `BeforeHook` and `AfterHook` traits for the appropriate closures
 - [ ] maybe `Guard` and `Filter` aren't such bad names?
 - [ ] maybe `Filter` can apply to outgoing messages too? annoying to have to implement separate security systems for events and requests.
 - [ ] some sort of `feathers-reactive` inspired library for data sync, which is pretty much the main reason to have this stuff. maybe also look at how feathers uses rethinkdb and does subscriptions with that, there may be something to learn.
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
+- [ ] also need to add `.action` handler to resource
 
 ## Debts
 

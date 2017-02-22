@@ -1,6 +1,6 @@
 use super::{Params, JsonValue, Reply};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Method {
   // indempotent methods (must be able to call many times and it'll have the same effect/return value as just once)
   List, // -> GET /resource

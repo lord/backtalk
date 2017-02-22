@@ -1,12 +1,14 @@
 use futures::{BoxFuture, Future};
 use futures::future::{ok, err};
 use std::sync::Arc;
+use std::collections::HashMap;
 use super::{Adapter, Reply, Req, JsonValue, Method};
 
 pub struct Resource {
   adapter: Arc<Box<Adapter>>,
   before: Vec<Arc<Box<BeforeHook>>>,
   after: Vec<Arc<Box<AfterHook>>>,
+  actions: Arc<HashMap<String, Box<Action>>>,
 }
 
 impl Resource {
@@ -15,6 +17,7 @@ impl Resource {
       adapter: Arc::new(Box::new(adapt)),
       before: Vec::new(),
       after: Vec::new(),
+      actions: Arc::new(HashMap::new()),
     }
   }
 
@@ -24,6 +27,10 @@ impl Resource {
 
   pub fn after<T: AfterHook + 'static>(&mut self, hook: T) {
     self.after.push(Arc::new(Box::new(hook)));
+  }
+
+  pub fn action<T: Action + 'static, S: Into<String>>(&mut self, name: S, action: T) {
+    Arc::get_mut(&mut self.actions).unwrap().insert(name.into(), Box::new(action));
   }
 
   pub fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
@@ -38,16 +45,22 @@ impl Resource {
     }
 
     let adapter = self.adapter.clone();
+    let actions = self.actions.clone();
 
     let mut reply = req.and_then(move |req| {
-      let res = match (req.method(), req.id()) {
-        (&Method::List, _) => adapter.find(req.params()),
-        (&Method::Post, _) => adapter.post(req.data(), req.params()),
-        (&Method::Get, &Some(ref id)) => adapter.get(id, req.params()),
-        (&Method::Delete, &Some(ref id)) => adapter.delete(id, req.params()),
-        (&Method::Patch, &Some(ref id)) => adapter.patch(id, req.data(), req.params()),
-        (&Method::Action(_), _) => unimplemented!(),
-        (_, &None) => return make_err("missing id in request"),
+      let res = match (req.method().clone(), req.id().clone()) {
+        (Method::List, _) => adapter.find(req.params()),
+        (Method::Post, _) => adapter.post(req.data(), req.params()),
+        (Method::Get, Some(ref id)) => adapter.get(id, req.params()),
+        (Method::Delete, Some(ref id)) => adapter.delete(id, req.params()),
+        (Method::Patch, Some(ref id)) => adapter.patch(id, req.data(), req.params()),
+        (Method::Action(ref action_name), _) => {
+          return match actions.get(action_name) {
+            Some(action) => action.handle(req),
+            None => make_err("action not found"),
+          }
+        },
+        (_, None) => return make_err("missing id in request"),
       };
       res.then(move |res| match res {
         Ok(val) => Ok(req.into_reply(200, val)),
@@ -71,4 +84,8 @@ pub trait BeforeHook: Sync + Send {
 
 pub trait AfterHook: Sync + Send {
   fn handle(&self, Reply) -> BoxFuture<Reply, Reply>;
+}
+
+pub trait Action: Sync + Send {
+  fn handle(&self, Req) -> BoxFuture<Reply, Reply>;
 }
