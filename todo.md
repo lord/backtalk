@@ -8,9 +8,14 @@
 - [ ] broadcasting events to event listeners with a `Channel` trait
 - [ ] better errors
 - [ ] implement `BeforeHook` and `AfterHook` traits for the appropriate closures
+- [ ] maybe `Guard` and `Filter` aren't such bad names?
+- [ ] maybe `Filter` can apply to outgoing messages too? annoying to have to implement separate security systems for events and requests.
+- [ ] some sort of `feathers-reactive` inspired library for data sync, which is pretty much the main reason to have this stuff. maybe also look at how feathers uses rethinkdb and does subscriptions with that, there may be something to learn.
+- [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
 
 ## Debts
 
+- [ ] should eventually make both websocket and http server run on the same event loop?
 - [ ] there are shared locks everywhere in the form of `Arc`s. should ask about passing references to a future, it's not like they need mutable access or anything. but getting rid of the arcs sped up the code 2x in a 2000-parallel-connection load test
 - [ ] the other reason it is slow is because of all the `boxed` allocations. should ask if it's possible to remove those in irc or something. maybe do a test first to see if you don't assemble from the Vec dynamically if it will compile with only a single box? may be able to speed up all the code with macros. and eventually, maybe could do some sort of recursion to avoid boxes. maybe. eh. not quite sure.
 - [ ] server.rs should be split up and refactored
