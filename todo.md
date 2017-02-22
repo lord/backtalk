@@ -4,9 +4,10 @@
 - [x] add `Resource` trait with various methods
 - [x] add http routing to server
 - [x] add `BeforeHook` and `AfterHook` traits
-- [ ] implement https://github.com/socketio/engine.io-protocol and https://github.com/socketio/socket.io-protocol in Rust
+- [ ] look at https://github.com/socketio/engine.io-protocol and https://github.com/socketio/socket.io-protocol for protocol inspiration
 - [ ] broadcasting events to event listeners with a `Channel` trait
 - [ ] better errors
+- [ ] implement `BeforeHook` and `AfterHook` traits for the appropriate closures
 
 ## Debts
 
