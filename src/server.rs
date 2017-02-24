@@ -4,6 +4,8 @@ use tokio_core;
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
+use std::time::Duration;
+use futures::Sink;
 use tokio_core::reactor::Core;
 use std::thread;
 use futures;
@@ -187,6 +189,21 @@ impl http::Service for HttpService {
     let query = http_req.query().unwrap_or("").to_string();
     let server = self.server.clone();
     let body_prom = http_req.body().fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
+
+    if path == "/eventsource_test" {
+      let (mut chunk_sender, body) = hyper::Body::pair();
+      thread::spawn(|| {
+        thread::sleep(Duration::from_millis(1000));
+        let chunk_sender = chunk_sender.send(Ok(hyper::Chunk::from("meow!\n"))).wait().unwrap();
+        println!("flushed!");
+        thread::sleep(Duration::from_millis(1000));
+        let chunk_sender = chunk_sender.send(Ok(hyper::Chunk::from("meow2!\n"))).wait().unwrap();
+      });
+      let resp = http::Response::new()
+        .with_body(body);
+      return ok(resp).boxed();
+    }
+
 
     body_prom.then(move |body_res| {
       match http_to_req(&method, &path, &query, body_res.ok(), &server) {
