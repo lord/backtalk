@@ -193,11 +193,14 @@ impl http::Service for HttpService {
     if path == "/eventsource_test" {
       let (mut chunk_sender, body) = hyper::Body::pair();
       thread::spawn(|| {
-        thread::sleep(Duration::from_millis(1000));
-        let chunk_sender = chunk_sender.send(Ok(hyper::Chunk::from("meow!\n"))).wait().unwrap();
-        println!("flushed!");
-        thread::sleep(Duration::from_millis(1000));
-        let chunk_sender = chunk_sender.send(Ok(hyper::Chunk::from("meow2!\n"))).wait().unwrap();
+        let mut chunk_sender = chunk_sender;
+        loop {
+          chunk_sender = match chunk_sender.send(Ok(hyper::Chunk::from("meow!\n"))).wait() {
+            Ok(sender) => sender,
+            Err(_) => return
+          };
+          thread::sleep(Duration::from_millis(1000));
+        }
       });
       let resp = http::Response::new()
         .with_body(body);
