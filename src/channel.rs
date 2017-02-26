@@ -1,13 +1,27 @@
 use ::JsonValue;
+use futures;
+use hyper;
+use hyper::Chunk;
 
-// TODO sender should probably be a custom struct that is willing
-// to accept JsonValue as an argument.
-// also maybe would be nice to be able to store authentication information somewhere here
+type ChunkSender = futures::sync::mpsc::Sender<Result<Chunk, hyper::Error>>;
 
-pub struct Sender {}
+pub struct Sender {
+  chunk_sender: ChunkSender,
+  capacity: u64,
+}
+
+impl Sender {
+  fn new(cap: u64, chunk_sender: ChunkSender) -> Sender {
+    Sender {
+      chunk_sender: chunk_sender,
+      capacity: cap,
+    }
+  }
+}
+
+// TODO also maybe would be nice to be able to store authentication information somewhere here
 
 pub trait Channel {
-  fn join(&self, Sender); // string is obvs temp value
-  fn leave(&self, Sender); // string is obvs temp value
+  fn join(&self, Sender);
   fn handle(&self, JsonValue);
 }
