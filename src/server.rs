@@ -11,7 +11,7 @@ use std::thread;
 use futures;
 use hyper;
 use hyper::StatusCode;
-use hyper::header::{ContentLength, ContentType};
+use hyper::header::{ContentLength, ContentType, Accept};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper::server as http;
 use hyper::Method as HttpMethod;
@@ -185,14 +185,27 @@ impl http::Service for HttpService {
   type Future = BoxFuture<http::Response, hyper::Error>;
 
   fn call(&self, http_req: http::Request) -> Self::Future {
-    println!("{:?}", &http_req);
-
     let (method, uri, _, headers, body) = http_req.deconstruct();
+
+    let default_accept = Accept::star();
+    let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
+    // TODO better and actually spec compliant Accept header matching
+    // should throw error if can't return either eventsource or json
+    let (_, is_eventsource) = accepts.fold((0, false), |prev, ref quality_item| {
+      let (mut best_qual, mut is_eventsource) = prev;
+      let this_quality = quality_item.quality.0;
+      if this_quality > best_qual {
+        best_qual = this_quality;
+        let Mime(ref top_level, ref sub_level, _) = quality_item.item;
+        is_eventsource = top_level == &TopLevel::Text && sub_level == &SubLevel::EventStream;
+      }
+      (best_qual, is_eventsource)
+    });
 
     let server = self.server.clone();
     let body_prom = body.fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
 
-    if uri.path() == "/eventsource_test" {
+    if is_eventsource {
       let (chunk_sender, body) = hyper::Body::pair();
       thread::spawn(|| {
         let mut chunk_sender = chunk_sender;
