@@ -11,7 +11,8 @@ use std::thread;
 use futures;
 use hyper;
 use hyper::StatusCode;
-use hyper::header::ContentLength;
+use hyper::header::{ContentLength, ContentType};
+use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper::server as http;
 use hyper::Method as HttpMethod;
 use futures::Stream;
@@ -191,18 +192,24 @@ impl http::Service for HttpService {
     let body_prom = http_req.body().fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
 
     if path == "/eventsource_test" {
-      let (mut chunk_sender, body) = hyper::Body::pair();
+      let (chunk_sender, body) = hyper::Body::pair();
       thread::spawn(|| {
         let mut chunk_sender = chunk_sender;
+        let mut n = 0;
         loop {
-          chunk_sender = match chunk_sender.send(Ok(hyper::Chunk::from("meow!\n"))).wait() {
+          n+=1;
+          if n == 10 {
+            return
+          }
+          chunk_sender = match chunk_sender.send(Ok(hyper::Chunk::from("data: meow\n\n"))).wait() {
             Ok(sender) => sender,
             Err(_) => return
           };
-          thread::sleep(Duration::from_millis(1000));
+          thread::sleep(Duration::from_millis(500));
         }
       });
       let resp = http::Response::new()
+        .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
         .with_body(body);
       return ok(resp).boxed();
     }
