@@ -185,13 +185,14 @@ impl http::Service for HttpService {
   type Future = BoxFuture<http::Response, hyper::Error>;
 
   fn call(&self, http_req: http::Request) -> Self::Future {
-    let method = http_req.method().clone();
-    let path = http_req.path().to_string();
-    let query = http_req.query().unwrap_or("").to_string();
-    let server = self.server.clone();
-    let body_prom = http_req.body().fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
+    println!("{:?}", &http_req);
 
-    if path == "/eventsource_test" {
+    let (method, uri, _, headers, body) = http_req.deconstruct();
+
+    let server = self.server.clone();
+    let body_prom = body.fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
+
+    if uri.path() == "/eventsource_test" {
       let (chunk_sender, body) = hyper::Body::pair();
       thread::spawn(|| {
         let mut chunk_sender = chunk_sender;
@@ -216,7 +217,7 @@ impl http::Service for HttpService {
 
 
     body_prom.then(move |body_res| {
-      match http_to_req(&method, &path, &query, body_res.ok(), &server) {
+      match http_to_req(&method, uri.path(), uri.query().unwrap_or(""), body_res.ok(), &server) {
         Ok(req) => server.handle(req),
         Err(reply) => err(reply).boxed(),
       }
