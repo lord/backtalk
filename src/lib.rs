@@ -1,4 +1,3 @@
-extern crate ws;
 extern crate futures;
 extern crate tokio_core;
 extern crate serde_json;
