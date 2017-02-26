@@ -243,7 +243,7 @@ impl Server {
 
   pub fn listen<T: Into<String> + Send + 'static>(self, bind_addr: T) {
     let addr: String = bind_addr.into();
-    let http_addr = (addr.clone() + ":3334").as_str().parse().unwrap();
+    let http_addr = addr.as_str().parse().unwrap();
     let server_arc = Arc::new(self);
     let server_clone = server_arc.clone();
     let server = http::Http::new().bind(&http_addr, move || {
