@@ -196,12 +196,12 @@ impl http::Service for HttpService {
         Ok(req) => server.handle(req),
         Err(reply) => err(reply).boxed(),
       }
-    }).then(|reply| -> BoxFuture<hyper::server::Response<Body>, hyper::Error> {
+    }).then(|reply| {
       let http_resp = match reply {
         Ok(r) => r.to_http(),
         Err(r) => r.to_http(),
       };
-      ok(http_resp).boxed()
+      ok(http_resp)
     }).boxed()
   }
 }
