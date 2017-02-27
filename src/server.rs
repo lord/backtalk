@@ -3,7 +3,6 @@ use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
 use std::time::Duration;
-use futures::Sink;
 use std::thread;
 use hyper;
 use hyper::StatusCode;
@@ -17,6 +16,7 @@ use std::sync::Arc;
 use queryst::parse as query_parse;
 use serde_json::Map;
 use serde_json;
+use ::Sender;
 use body::Body;
 
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
@@ -167,17 +167,21 @@ impl http::Service for HttpService {
 
     if is_eventsource {
       let (chunk_sender, body) = Body::pair();
-      thread::spawn(|| {
-        let mut chunk_sender = chunk_sender;
+      thread::spawn(move || {
+        let mut sender = Sender::new(chunk_sender);
         let mut n = 0;
         loop {
           n+=1;
           if n == 10 {
             return
           }
-          chunk_sender = match chunk_sender.send(hyper::Chunk::from("data: meow\n\n")).wait() {
-            Ok(sender) => sender,
-            Err(_) => return
+          match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
+            Err(_) => return,
+            _ => (),
+          };
+          match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
+            Err(_) => return,
+            _ => (),
           };
           thread::sleep(Duration::from_millis(500));
         }

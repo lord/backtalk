@@ -1,21 +1,23 @@
 use ::JsonValue;
 use futures;
-use hyper;
 use hyper::Chunk;
 
-type ChunkSender = futures::sync::mpsc::Sender<Result<Chunk, hyper::Error>>;
+type ChunkSender = futures::sync::mpsc::UnboundedSender<Chunk>;
 
 pub struct Sender {
-  chunk_sender: ChunkSender,
-  capacity: u64,
+  inner: ChunkSender,
 }
 
 impl Sender {
-  fn new(cap: u64, chunk_sender: ChunkSender) -> Sender {
+  pub fn new(chunk_sender: ChunkSender) -> Sender {
     Sender {
-      chunk_sender: chunk_sender,
-      capacity: cap,
+      inner: chunk_sender,
     }
+  }
+
+  pub fn send(&mut self, val: JsonValue) -> Result<(), ()> {
+    let wrapped_str = format!("data:{}\n\n", val);
+    self.inner.send(wrapped_str.into()).map_err(|_| ())
   }
 }
 

@@ -26,7 +26,7 @@ mod resource;
 pub use resource::{Resource, BeforeHook, AfterHook};
 
 mod channel;
-pub use channel::{Channel};
+pub use channel::{Channel, Sender};
 
 #[cfg(test)]
 mod tests {
