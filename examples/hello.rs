@@ -5,20 +5,10 @@ use backtalk::*;
 use futures::{BoxFuture, Future};
 use futures::future::ok;
 
-struct MyHook;
-impl Guard for MyHook {
-  fn handle(&self, req: Req) -> BoxFuture<Req, Reply> {
-    ok(req).boxed()
-  }
-}
-
 fn main() {
   let mut s = Server::new();
   let mut r = Resource::new(MemoryAdapter{});
   r.channel(BroadcastChannel::new());
-  // for _ in 0..1000 {
-  //   r.before(MyHook{});
-  // }
   s.mount("/hello", r);
   s.listen("127.0.0.1:3000");
 }
