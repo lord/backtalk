@@ -43,7 +43,7 @@ impl Reply {
           .with_body(Body::Once(Some(resp_str.into())))
       },
       ReplyData::Stream(stream) => {
-        http::Response::new()
+        resp
           .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
           .with_body(Body::Stream(stream))
       },
