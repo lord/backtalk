@@ -14,6 +14,8 @@ pub use req::{Req, Method};
 mod server;
 pub use server::Server;
 
+mod body;
+
 mod reply;
 pub use reply::Reply;
 

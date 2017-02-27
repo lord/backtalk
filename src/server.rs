@@ -17,6 +17,7 @@ use std::sync::Arc;
 use queryst::parse as query_parse;
 use serde_json::Map;
 use serde_json;
+use body::Body;
 
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
   fn err(err_str: &str) -> Result<Req, Reply> {
@@ -139,9 +140,9 @@ struct HttpService {
 
 impl http::Service for HttpService {
   type Request = http::Request;
-  type Response = http::Response;
+  type Response = http::Response<Body>;
   type Error = hyper::Error;
-  type Future = BoxFuture<http::Response, hyper::Error>;
+  type Future = BoxFuture<Self::Response, Self::Error>;
 
   fn call(&self, http_req: http::Request) -> Self::Future {
     let (method, uri, _, headers, body) = http_req.deconstruct();
@@ -165,7 +166,7 @@ impl http::Service for HttpService {
     let body_prom = body.fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
 
     if is_eventsource {
-      let (chunk_sender, body) = hyper::Body::pair();
+      let (chunk_sender, body) = Body::pair();
       thread::spawn(|| {
         let mut chunk_sender = chunk_sender;
         let mut n = 0;
@@ -174,7 +175,7 @@ impl http::Service for HttpService {
           if n == 10 {
             return
           }
-          chunk_sender = match chunk_sender.send(Ok(hyper::Chunk::from("data: meow\n\n"))).wait() {
+          chunk_sender = match chunk_sender.send(hyper::Chunk::from("data: meow\n\n")).wait() {
             Ok(sender) => sender,
             Err(_) => return
           };
@@ -193,7 +194,7 @@ impl http::Service for HttpService {
         Ok(req) => server.handle(req),
         Err(reply) => err(reply).boxed(),
       }
-    }).then(|resp| -> BoxFuture<hyper::server::Response, hyper::Error> {
+    }).then(|resp| -> BoxFuture<hyper::server::Response<Body>, hyper::Error> {
       let http_resp = match resp {
         Ok(s) => {
           let resp_str = s.to_string();
@@ -246,7 +247,7 @@ impl Server {
     let http_addr = addr.as_str().parse().unwrap();
     let server_arc = Arc::new(self);
     let server_clone = server_arc.clone();
-    let server = http::Http::new().bind(&http_addr, move || {
+    let server = http::Http::new().bind::<_, Body>(&http_addr, move || {
       Ok(HttpService{server: (&server_clone).clone()})
     }).unwrap();
     println!("Listening on http://{} with 1 thread.", server.local_addr().unwrap());
