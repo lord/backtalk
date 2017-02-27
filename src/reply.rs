@@ -1,8 +1,9 @@
 use super::{JsonValue, Req};
-use std::convert::From;
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType, Accept};
+use hyper::mime::{Mime, TopLevel, SubLevel};
+use hyper;
 use hyper::Chunk as HyperChunk;
 use futures::{Poll, Stream, Async};
 use futures::sync::mpsc;
@@ -32,13 +33,21 @@ impl Reply {
   }
 
   pub fn to_http(self) -> http::Response<Body> {
-    let resp_str = self.to_string();
-    http::Response::new()
-      .with_header(ContentLength(resp_str.len() as u64))
-      .with_body(resp_str)
-    //   let resp = http::Response::new()
-    //     .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
-    //     .with_body(body);
+    let resp = http::Response::new();
+
+    match self.data {
+      ReplyData::Value(val) => {
+        let resp_str = val.to_string();
+        resp
+          .with_header(ContentLength(resp_str.len() as u64))
+          .with_body(Body::Once(Some(resp_str.into())))
+      },
+      ReplyData::Stream(stream) => {
+        http::Response::new()
+          .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
+          .with_body(Body::Stream(stream))
+      },
+    }
   }
 
   pub fn new_streamed(code: i64, req: Option<Req>) -> (Sender, Reply) {
@@ -50,13 +59,6 @@ impl Reply {
     };
     let sender = Sender::new(tx);
     (sender, reply)
-  }
-
-  pub fn to_string(self) -> String {
-    match self.data {
-      ReplyData::Value(val) => val.to_string(),
-      ReplyData::Stream(_) => unimplemented!(),
-    }
   }
 }
 
@@ -82,10 +84,3 @@ impl Stream for Body {
     }
   }
 }
-
-impl From<String> for Body {
-  fn from(s: String) -> Body {
-    Body::Once(Some(s.into()))
-  }
-}
-
