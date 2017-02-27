@@ -1,4 +1,5 @@
 use ::JsonValue;
+use ::Method;
 use futures;
 use hyper::Chunk;
 use std::sync::Mutex;
@@ -26,7 +27,7 @@ impl Sender {
 
 pub trait Channel: Send + Sync {
   fn join(&self, Sender);
-  fn handle(&self, &str, JsonValue);
+  fn handle(&self, Method, JsonValue);
 }
 
 pub struct BroadcastChannel {
@@ -46,7 +47,7 @@ impl Channel for BroadcastChannel {
     self.senders.lock().unwrap().push(sender)
   }
 
-  fn handle(&self, _: &str, msg: JsonValue) {
+  fn handle(&self, _: Method, msg: JsonValue) {
     for sender in self.senders.lock().unwrap().iter_mut() {
       sender.send(msg.clone());
     }

@@ -82,9 +82,12 @@ impl Resource {
       };
       res.then(move |res| match res {
         Ok(val) => {
-          match channel2 {
-            None => (),
-            Some(chan) => chan.handle("msg type here", val.clone()),
+          match (req.method(), channel2) {
+            (&Method::Post, Some(ref chan)) => chan.handle(Method::Post, val.clone()),
+            (&Method::Patch, Some(ref chan)) => chan.handle(Method::Patch, val.clone()),
+            (&Method::Delete, Some(ref chan)) => chan.handle(Method::Delete, val.clone()),
+            (&Method::Action(ref action), Some(ref chan)) => chan.handle(Method::Action(action.to_string()), val.clone()),
+            _ => (),
           }
           Ok(req.into_reply(200, val))
         },
