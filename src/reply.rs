@@ -1,7 +1,7 @@
 use super::{JsonValue, Req};
 use hyper::server as http;
 use hyper::Error as HyperError;
-use hyper::header::{ContentLength, ContentType, Accept};
+use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper;
 use hyper::Chunk as HyperChunk;

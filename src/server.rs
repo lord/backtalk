@@ -2,12 +2,9 @@ use super::{JsonValue, Reply, Req, Resource, Method};
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
-use std::time::Duration;
-use std::thread;
 use hyper;
-use hyper::StatusCode;
 use hyper::mime::{Mime, TopLevel, SubLevel};
-use hyper::header::{ContentLength, ContentType, Accept};
+use hyper::header::{Accept};
 use hyper::server as http;
 use hyper::Method as HttpMethod;
 use futures::Stream;
@@ -16,7 +13,6 @@ use std::sync::Arc;
 use queryst::parse as query_parse;
 use serde_json::Map;
 use serde_json;
-use ::Sender;
 use reply::Body;
 
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
