@@ -6,7 +6,7 @@ use futures::{BoxFuture, Future};
 use futures::future::ok;
 
 struct MyHook;
-impl BeforeHook for MyHook {
+impl Guard for MyHook {
   fn handle(&self, req: Req) -> BoxFuture<Req, Reply> {
     ok(req).boxed()
   }

@@ -6,8 +6,8 @@ use super::{Adapter, Reply, Req, JsonValue, Method, Channel};
 
 pub struct Resource {
   adapter: Arc<Box<Adapter>>,
-  before: Vec<Arc<Box<BeforeHook>>>,
-  after: Vec<Arc<Box<AfterHook>>>,
+  before: Vec<Arc<Box<Guard>>>,
+  after: Vec<Arc<Box<Filter>>>,
   actions: Arc<HashMap<String, Box<Action>>>,
   channel: Option<Arc<Box<Channel>>>,
 }
@@ -27,11 +27,11 @@ impl Resource {
     self.channel = Some(Arc::new(Box::new(chan)));
   }
 
-  pub fn before<T: BeforeHook + 'static>(&mut self, hook: T) {
+  pub fn before<T: Guard + 'static>(&mut self, hook: T) {
     self.before.push(Arc::new(Box::new(hook)));
   }
 
-  pub fn after<T: AfterHook + 'static>(&mut self, hook: T) {
+  pub fn after<T: Filter + 'static>(&mut self, hook: T) {
     self.after.push(Arc::new(Box::new(hook)));
   }
 
@@ -105,11 +105,11 @@ impl Resource {
 }
 
 // TODO ALLOW HOOKS TO RETURN ANY KIND OF FUTURE? so we avoid double boxed allocations
-pub trait BeforeHook: Sync + Send {
+pub trait Guard: Sync + Send {
   fn handle(&self, Req) -> BoxFuture<Req, Reply>;
 }
 
-pub trait AfterHook: Sync + Send {
+pub trait Filter: Sync + Send {
   fn handle(&self, Reply) -> BoxFuture<Reply, Reply>;
 }
 

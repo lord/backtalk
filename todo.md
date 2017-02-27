@@ -5,11 +5,11 @@
 - [x] add http routing to server
 - [x] add `BeforeHook` and `AfterHook` traits
 - [x] also need to add `.action` handler to resource
-- [ ] broadcasting events to event listeners with a `Channel` trait
-- [ ] switch to SSE, remove `ws-rs` dependency
+- [x] broadcasting events to event listeners with a `Channel` trait
+- [x] switch to SSE, remove `ws-rs` dependency
 - [ ] better errors
 - [ ] implement `BeforeHook` and `AfterHook` traits for the appropriate closures
-- [ ] maybe `Guard` and `Filter` aren't such bad names?
+- [x] maybe `Guard` and `Filter` aren't such bad names?
 - [ ] maybe `Filter` can apply to outgoing messages too? annoying to have to implement separate security systems for events and requests.
 - [ ] some sort of `feathers-reactive` inspired library for data sync, which is pretty much the main reason to have this stuff. maybe also look at how feathers uses rethinkdb and does subscriptions with that, there may be something to learn.
 - [ ] better name than `Sender`
