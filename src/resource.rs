@@ -6,10 +6,8 @@ use super::{Adapter, Reply, Req, JsonValue, Method, Channel};
 
 pub struct Resource {
   adapter: Arc<Box<Adapter>>,
-  before: Vec<Arc<Box<Guard>>>,
-  after: Vec<Arc<Box<Filter>>>,
-  // before: Arc<Box<Guard>>,
-  // after: Arc<Box<Filter>>,
+  before: Arc<Box<Guard>>,
+  after: Arc<Box<Filter>>,
   actions: Arc<HashMap<String, Box<Action>>>,
   channel: Option<Arc<Box<Channel>>>,
 }
@@ -18,8 +16,8 @@ impl Resource {
   pub fn new<T: Adapter + 'static>(adapt: T) -> Resource {
     Resource {
       adapter: Arc::new(Box::new(adapt)),
-      before: Vec::new(),
-      after: Vec::new(),
+      before: Arc::new(Box::new(NoGuard{})),
+      after: Arc::new(Box::new(NoFilter{})),
       actions: Arc::new(HashMap::new()),
       channel: None,
     }
@@ -30,11 +28,11 @@ impl Resource {
   }
 
   pub fn before<T: Guard + 'static>(&mut self, hook: T) {
-    self.before.push(Arc::new(Box::new(hook)));
+    self.before = Arc::new(Box::new(hook));
   }
 
   pub fn after<T: Filter + 'static>(&mut self, hook: T) {
-    self.after.push(Arc::new(Box::new(hook)));
+    self.after = Arc::new(Box::new(hook));
   }
 
   pub fn action<T: Action + 'static, S: Into<String>>(&mut self, name: S, action: T) {
@@ -46,18 +44,15 @@ impl Resource {
       err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())]))).boxed()
     }
 
-    let mut req: BoxFuture<Req, Reply> = ok(req).boxed();
-    for hook in &self.before {
-      let hook = hook.clone(); // TODO SEE IF THIS IS NECESSARY
-      req = req.and_then(move |req| hook.handle(req)).boxed();
-    }
+    let req = self.before.handle(req);
 
     let adapter = self.adapter.clone();
     let actions = self.actions.clone();
     let channel = self.channel.clone();
     let channel2 = self.channel.clone();
+    let after = self.after.clone();
 
-    let mut reply = req.and_then(move |req| {
+    req.and_then(move |req| {
       let res = match (req.method().clone(), req.id().clone()) {
         (Method::List, _) => adapter.find(req.params()),
         (Method::Post, _) => adapter.post(req.data(), req.params()),
@@ -95,14 +90,7 @@ impl Resource {
         },
         Err((code, val)) => Err(req.into_reply(code, val)),
       }).boxed()
-    }).boxed();
-
-    for hook in &self.after {
-      let hook = hook.clone();
-      reply = reply.and_then(move |reply| hook.handle(reply)).boxed();
-    }
-
-    reply
+    }).and_then(move |reply| after.handle(reply)).boxed()
   }
 }
 
@@ -117,6 +105,13 @@ impl <T> Guard for T where T: Fn(Req) -> BoxFuture<Req, Reply> + Send + Sync {
   }
 }
 
+struct NoGuard {}
+impl Guard for NoGuard {
+  fn handle(&self, r: Req) -> BoxFuture<Req, Reply> {
+    ok(r).boxed()
+  }
+}
+
 pub trait Filter: Sync + Send {
   fn handle(&self, Reply) -> BoxFuture<Reply, Reply>;
 }
@@ -124,6 +119,13 @@ pub trait Filter: Sync + Send {
 impl <T> Filter for T where T: Fn(Reply) -> BoxFuture<Reply, Reply> + Send + Sync {
   fn handle(&self, r: Reply) -> BoxFuture<Reply, Reply> {
     self(r)
+  }
+}
+
+struct NoFilter {}
+impl Filter for NoFilter {
+  fn handle(&self, r: Reply) -> BoxFuture<Reply, Reply> {
+    ok(r).boxed()
   }
 }
 
