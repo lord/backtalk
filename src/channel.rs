@@ -26,7 +26,7 @@ impl Sender {
 
 pub trait Channel: Send + Sync {
   fn join(&self, Sender);
-  fn handle(&self, JsonValue);
+  fn handle(&self, &str, JsonValue);
 }
 
 pub struct BroadcastChannel {
@@ -46,7 +46,7 @@ impl Channel for BroadcastChannel {
     self.senders.lock().unwrap().push(sender)
   }
 
-  fn handle(&self, msg: JsonValue) {
+  fn handle(&self, _: &str, msg: JsonValue) {
     for sender in self.senders.lock().unwrap().iter_mut() {
       sender.send(msg.clone());
     }

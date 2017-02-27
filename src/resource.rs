@@ -53,6 +53,7 @@ impl Resource {
     let adapter = self.adapter.clone();
     let actions = self.actions.clone();
     let channel = self.channel.clone();
+    let channel2 = self.channel.clone();
 
     let mut reply = req.and_then(move |req| {
       let res = match (req.method().clone(), req.id().clone()) {
@@ -80,7 +81,13 @@ impl Resource {
         (_, None) => return make_err("missing id in request"),
       };
       res.then(move |res| match res {
-        Ok(val) => Ok(req.into_reply(200, val)),
+        Ok(val) => {
+          match channel2 {
+            None => (),
+            Some(chan) => chan.handle("msg type here", val.clone()),
+          }
+          Ok(req.into_reply(200, val))
+        },
         Err((code, val)) => Err(req.into_reply(code, val)),
       }).boxed()
     }).boxed();
