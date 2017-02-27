@@ -15,6 +15,7 @@
 - [ ] better name than `Sender`
 - [ ] make `Sender` be able to resend missed messages with the LastId header or whatever it's called
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
+- [ ] maybe rename channel to radio?
 
 ## Debts
 

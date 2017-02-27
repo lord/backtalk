@@ -2,13 +2,14 @@ use futures::{BoxFuture, Future};
 use futures::future::{ok, err};
 use std::sync::Arc;
 use std::collections::HashMap;
-use super::{Adapter, Reply, Req, JsonValue, Method};
+use super::{Adapter, Reply, Req, JsonValue, Method, Channel};
 
 pub struct Resource {
   adapter: Arc<Box<Adapter>>,
   before: Vec<Arc<Box<BeforeHook>>>,
   after: Vec<Arc<Box<AfterHook>>>,
   actions: Arc<HashMap<String, Box<Action>>>,
+  channel: Option<Arc<Box<Channel>>>,
 }
 
 impl Resource {
@@ -18,7 +19,12 @@ impl Resource {
       before: Vec::new(),
       after: Vec::new(),
       actions: Arc::new(HashMap::new()),
+      channel: None,
     }
+  }
+
+  pub fn channel<T: Channel + 'static>(&mut self, chan: T) {
+    self.channel = Some(Arc::new(Box::new(chan)));
   }
 
   pub fn before<T: BeforeHook + 'static>(&mut self, hook: T) {
@@ -46,6 +52,7 @@ impl Resource {
 
     let adapter = self.adapter.clone();
     let actions = self.actions.clone();
+    let channel = self.channel.clone();
 
     let mut reply = req.and_then(move |req| {
       let res = match (req.method().clone(), req.id().clone()) {
@@ -60,7 +67,16 @@ impl Resource {
             None => make_err("action not found"),
           }
         },
-        (Method::Listen, id_opt) => unimplemented!(),
+        (Method::Listen, id_opt) => {
+          return match channel {
+            None => make_err("no channel installed"),
+            Some(chan) => {
+              let (sender, reply) = Reply::new_streamed(200, Some(req));
+              chan.join(sender);
+              ok(reply).boxed()
+            }
+          }
+        },
         (_, None) => return make_err("missing id in request"),
       };
       res.then(move |res| match res {
