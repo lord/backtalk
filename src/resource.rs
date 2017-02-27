@@ -8,6 +8,8 @@ pub struct Resource {
   adapter: Arc<Box<Adapter>>,
   before: Vec<Arc<Box<Guard>>>,
   after: Vec<Arc<Box<Filter>>>,
+  // before: Arc<Box<Guard>>,
+  // after: Arc<Box<Filter>>,
   actions: Arc<HashMap<String, Box<Action>>>,
   channel: Option<Arc<Box<Channel>>>,
 }
@@ -109,8 +111,20 @@ pub trait Guard: Sync + Send {
   fn handle(&self, Req) -> BoxFuture<Req, Reply>;
 }
 
+impl <T> Guard for T where T: Fn(Req) -> BoxFuture<Req, Reply> + Send + Sync {
+  fn handle(&self, r: Req) -> BoxFuture<Req, Reply> {
+    self(r)
+  }
+}
+
 pub trait Filter: Sync + Send {
   fn handle(&self, Reply) -> BoxFuture<Reply, Reply>;
+}
+
+impl <T> Filter for T where T: Fn(Reply) -> BoxFuture<Reply, Reply> + Send + Sync {
+  fn handle(&self, r: Reply) -> BoxFuture<Reply, Reply> {
+    self(r)
+  }
 }
 
 pub trait Action: Sync + Send {
