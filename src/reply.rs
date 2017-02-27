@@ -1,10 +1,24 @@
 use super::{JsonValue, Req};
+use std::convert::From;
+use hyper::server as http;
+use hyper::Error as HyperError;
+use hyper::header::{ContentLength, ContentType, Accept};
+use hyper::Chunk as HyperChunk;
+use futures::{Poll, Stream, Async};
+use futures::sync::mpsc;
+use Sender;
 
-#[derive(Debug)]
+type MpscReceiver = mpsc::UnboundedReceiver<HyperChunk>;
+
 pub struct Reply {
-  data: JsonValue,
+  data: ReplyData,
   code: i64, // TODO replace with enum of errors, etc
   req: Option<Req>,
+}
+
+enum ReplyData {
+  Value(JsonValue),
+  Stream(MpscReceiver),
 }
 
 impl Reply {
@@ -13,11 +27,62 @@ impl Reply {
     Reply {
       code: code,
       req: req,
-      data: data,
+      data: ReplyData::Value(data),
     }
   }
 
+  pub fn to_http(self) -> http::Response<Body> {
+    let resp_str = self.to_string();
+    http::Response::new()
+      .with_header(ContentLength(resp_str.len() as u64))
+      .with_body(resp_str)
+  }
+
+  pub fn new_streamed(code: i64, req: Option<Req>) -> (Sender, Reply) {
+    let (tx, rx) = mpsc::unbounded();
+    let reply = Reply {
+      code: code,
+      req: req,
+      data: ReplyData::Stream(rx)
+    };
+    let sender = Sender::new(tx);
+    (sender, reply)
+  }
+
   pub fn to_string(self) -> String {
-    self.data.to_string()
+    match self.data {
+      ReplyData::Value(val) => val.to_string(),
+      ReplyData::Stream(_) => unimplemented!(),
+    }
   }
 }
+
+/// A `Stream` for `HyperChunk`s used in requests and responses.
+pub enum Body {
+  Once(Option<HyperChunk>),
+  Stream(MpscReceiver),
+}
+
+impl Stream for Body {
+  type Item = HyperChunk;
+  type Error = HyperError;
+
+  fn poll(&mut self) -> Poll<Option<HyperChunk>, HyperError> {
+    match self {
+      &mut Body::Once(ref mut opt) => Ok(Async::Ready(opt.take())),
+      &mut Body::Stream(ref mut stream) => {
+        match stream.poll() {
+          Ok(u) => Ok(u),
+          Err(()) => Err(HyperError::Incomplete) // TODO FIX THIS ERROR
+        }
+      }
+    }
+  }
+}
+
+impl From<String> for Body {
+  fn from(s: String) -> Body {
+    Body::Once(Some(s.into()))
+  }
+}
+

@@ -13,6 +13,7 @@
 - [ ] maybe `Filter` can apply to outgoing messages too? annoying to have to implement separate security systems for events and requests.
 - [ ] some sort of `feathers-reactive` inspired library for data sync, which is pretty much the main reason to have this stuff. maybe also look at how feathers uses rethinkdb and does subscriptions with that, there may be something to learn.
 - [ ] better name than `Sender`
+- [ ] make `Sender` be able to resend missed messages with the LastId header or whatever it's called
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
 
 ## Debts

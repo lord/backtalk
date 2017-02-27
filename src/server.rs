@@ -6,8 +6,8 @@ use std::time::Duration;
 use std::thread;
 use hyper;
 use hyper::StatusCode;
-use hyper::header::{ContentLength, ContentType, Accept};
 use hyper::mime::{Mime, TopLevel, SubLevel};
+use hyper::header::{ContentLength, ContentType, Accept};
 use hyper::server as http;
 use hyper::Method as HttpMethod;
 use futures::Stream;
@@ -17,7 +17,7 @@ use queryst::parse as query_parse;
 use serde_json::Map;
 use serde_json;
 use ::Sender;
-use body::Body;
+use reply::Body;
 
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
   fn err(err_str: &str) -> Result<Req, Reply> {
@@ -165,54 +165,41 @@ impl http::Service for HttpService {
     let server = self.server.clone();
     let body_prom = body.fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
 
-    if is_eventsource {
-      let (chunk_sender, body) = Body::pair();
-      thread::spawn(move || {
-        let mut sender = Sender::new(chunk_sender);
-        let mut n = 0;
-        loop {
-          n+=1;
-          if n == 10 {
-            return
-          }
-          match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
-            Err(_) => return,
-            _ => (),
-          };
-          match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
-            Err(_) => return,
-            _ => (),
-          };
-          thread::sleep(Duration::from_millis(500));
-        }
-      });
-      let resp = http::Response::new()
-        .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
-        .with_body(body);
-      return ok(resp).boxed();
-    }
-
+    // if is_eventsource {
+    //   let (sender, _) = Reply::new_streamed(None);
+    //   thread::spawn(move || {
+    //     let mut n = 0;
+    //     loop {
+    //       n+=1;
+    //       if n == 10 {
+    //         return
+    //       }
+    //       match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
+    //         Err(_) => return,
+    //         _ => (),
+    //       };
+    //       match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
+    //         Err(_) => return,
+    //         _ => (),
+    //       };
+    //       thread::sleep(Duration::from_millis(500));
+    //     }
+    //   });
+    //   let resp = http::Response::new()
+    //     .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
+    //     .with_body(body);
+    //   return ok(resp).boxed();
+    // }
 
     body_prom.then(move |body_res| {
       match http_to_req(&method, uri.path(), uri.query().unwrap_or(""), body_res.ok(), &server) {
         Ok(req) => server.handle(req),
         Err(reply) => err(reply).boxed(),
       }
-    }).then(|resp| -> BoxFuture<hyper::server::Response<Body>, hyper::Error> {
-      let http_resp = match resp {
-        Ok(s) => {
-          let resp_str = s.to_string();
-          http::Response::new()
-            .with_header(ContentLength(resp_str.len() as u64))
-            .with_body(resp_str)
-        }
-        Err(s) => {
-          let resp_str = s.to_string();
-          http::Response::new()
-            .with_status(StatusCode::NotFound) // TODO MAKE THIS A PROPER STATUS CODE
-            .with_header(ContentLength(resp_str.len() as u64))
-            .with_body(resp_str)
-        },
+    }).then(|reply| -> BoxFuture<hyper::server::Response<Body>, hyper::Error> {
+      let http_resp = match reply {
+        Ok(r) => r.to_http(),
+        Err(r) => r.to_http(),
       };
       ok(http_resp).boxed()
     }).boxed()
