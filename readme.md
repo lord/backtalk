@@ -3,7 +3,7 @@
   <br>
   <a href="https://travis-ci.org/lord/backtalk"><img src="https://travis-ci.org/lord/backtalk.svg?branch=master" alt="Build Status"></a>
   <a href="https://crates.io/crates/backtalk"><img src="https://img.shields.io/crates/v/backtalk.svg" alt="Crate Info"></a>
-  <a href="https://docs.rs/backtalk"><img src="https://img.shields.io/badge/docs.rs-visit-green.svg" alt="Documentation"></a>
+  <a href="https://docs.rs/backtalk"><img src="https://img.shields.io/badge/docs.rs-visit-brightgreen.svg" alt="Documentation"></a>
 </p>
 
 Backtalk is a web framework for Rust. It's currently **very incomplete, undocumented, and in development**, and much is subject to change. The code is still messy and unperformant right now.
