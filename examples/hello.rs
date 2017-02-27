@@ -15,6 +15,7 @@ impl BeforeHook for MyHook {
 fn main() {
   let mut s = Server::new();
   let mut r = Resource::new(MemoryAdapter{});
+  r.channel(BroadcastChannel::new());
   // for _ in 0..1000 {
   //   r.before(MyHook{});
   // }

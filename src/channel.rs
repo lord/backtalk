@@ -1,6 +1,7 @@
 use ::JsonValue;
 use futures;
 use hyper::Chunk;
+use std::sync::Mutex;
 
 type ChunkSender = futures::sync::mpsc::UnboundedSender<Chunk>;
 
@@ -26,4 +27,28 @@ impl Sender {
 pub trait Channel: Send + Sync {
   fn join(&self, Sender);
   fn handle(&self, JsonValue);
+}
+
+pub struct BroadcastChannel {
+  senders: Mutex<Vec<Sender>>,
+}
+
+impl BroadcastChannel {
+  pub fn new() -> BroadcastChannel {
+    BroadcastChannel {
+      senders: Mutex::new(Vec::new()),
+    }
+  }
+}
+
+impl Channel for BroadcastChannel {
+  fn join(&self, sender: Sender) {
+    self.senders.lock().unwrap().push(sender)
+  }
+
+  fn handle(&self, msg: JsonValue) {
+    for sender in self.senders.lock().unwrap().iter_mut() {
+      sender.send(msg.clone());
+    }
+  }
 }
