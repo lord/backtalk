@@ -19,7 +19,22 @@ use serde_json;
 use ::Sender;
 use reply::Body;
 
-pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
+pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
+  let default_accept = Accept::star();
+  let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
+  // TODO better and actually spec compliant Accept header matching
+  // should throw error if can't return either eventsource or json
+  let (_, is_eventsource) = accepts.fold((0, false), |prev, ref quality_item| {
+    let (mut best_qual, mut is_eventsource) = prev;
+    let this_quality = quality_item.quality.0;
+    if this_quality > best_qual {
+      best_qual = this_quality;
+      let Mime(ref top_level, ref sub_level, _) = quality_item.item;
+      is_eventsource = top_level == &TopLevel::Text && sub_level == &SubLevel::EventStream;
+    }
+    (best_qual, is_eventsource)
+  });
+
   fn err(err_str: &str) -> Result<Req, Reply> {
     Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
   }
@@ -53,7 +68,15 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Ve
 
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
-    if method == &HttpMethod::Get {
+    if is_eventsource { // TODO should only work for GET? 403 otherwise? better spec compliance
+      return Ok(Req::new(
+        resource_url,
+        Method::Listen,
+        None,
+        JsonValue::Null,
+        query
+      ))
+    } else if method == &HttpMethod::Get {
       return Ok(Req::new(
         resource_url,
         Method::List,
@@ -80,7 +103,15 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, body: Option<Ve
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
-    if method == &HttpMethod::Get {
+    if is_eventsource { // TODO should only work for GET? 403 otherwise? better spec compliance
+      return Ok(Req::new(
+        resource_url,
+        Method::Listen,
+        Some(id.to_string()),
+        JsonValue::Null,
+        query
+      ))
+    } else if method == &HttpMethod::Get {
       return Ok(Req::new(
         resource_url,
         Method::Get,
@@ -147,52 +178,11 @@ impl http::Service for HttpService {
   fn call(&self, http_req: http::Request) -> Self::Future {
     let (method, uri, _, headers, body) = http_req.deconstruct();
 
-    let default_accept = Accept::star();
-    let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
-    // TODO better and actually spec compliant Accept header matching
-    // should throw error if can't return either eventsource or json
-    let (_, is_eventsource) = accepts.fold((0, false), |prev, ref quality_item| {
-      let (mut best_qual, mut is_eventsource) = prev;
-      let this_quality = quality_item.quality.0;
-      if this_quality > best_qual {
-        best_qual = this_quality;
-        let Mime(ref top_level, ref sub_level, _) = quality_item.item;
-        is_eventsource = top_level == &TopLevel::Text && sub_level == &SubLevel::EventStream;
-      }
-      (best_qual, is_eventsource)
-    });
-
     let server = self.server.clone();
     let body_prom = body.fold(Vec::new(), |mut a, b| -> FutureResult<Vec<u8>, hyper::Error> { a.extend_from_slice(&b[..]); ok(a) });
 
-    // if is_eventsource {
-    //   let (sender, _) = Reply::new_streamed(None);
-    //   thread::spawn(move || {
-    //     let mut n = 0;
-    //     loop {
-    //       n+=1;
-    //       if n == 10 {
-    //         return
-    //       }
-    //       match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
-    //         Err(_) => return,
-    //         _ => (),
-    //       };
-    //       match sender.send(JsonValue::Array(vec![JsonValue::String("meow".to_string())])) {
-    //         Err(_) => return,
-    //         _ => (),
-    //       };
-    //       thread::sleep(Duration::from_millis(500));
-    //     }
-    //   });
-    //   let resp = http::Response::new()
-    //     .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
-    //     .with_body(body);
-    //   return ok(resp).boxed();
-    // }
-
     body_prom.then(move |body_res| {
-      match http_to_req(&method, uri.path(), uri.query().unwrap_or(""), body_res.ok(), &server) {
+      match http_to_req(&method, uri.path(), uri.query().unwrap_or(""), &headers, body_res.ok(), &server) {
         Ok(req) => server.handle(req),
         Err(reply) => err(reply).boxed(),
       }

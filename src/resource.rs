@@ -60,6 +60,7 @@ impl Resource {
             None => make_err("action not found"),
           }
         },
+        (Method::Listen, id_opt) => unimplemented!(),
         (_, None) => return make_err("missing id in request"),
       };
       res.then(move |res| match res {

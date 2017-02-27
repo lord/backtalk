@@ -9,20 +9,8 @@ pub enum Method {
   // not indempotent
   Post, // -> POST /resource
   Patch, // -> PATCH /resource/123
+  Listen, // -> GET /resource or (maybe?) GET /resource/123 with content-type text/event-stream
   Action(String), // -> POST /resource/123/actionname
-}
-
-impl Method {
-  pub fn from_str(s: String) -> Method {
-    match s.as_str() {
-      "list" => Method::List,
-      "get" => Method::Get,
-      "delete" => Method::Delete,
-      "post" => Method::Post,
-      "patch" => Method::Patch,
-      _ => Method::Action(s),
-    }
-  }
 }
 
 #[derive(Debug)]

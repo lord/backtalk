@@ -36,6 +36,9 @@ impl Reply {
     http::Response::new()
       .with_header(ContentLength(resp_str.len() as u64))
       .with_body(resp_str)
+    //   let resp = http::Response::new()
+    //     .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
+    //     .with_body(body);
   }
 
   pub fn new_streamed(code: i64, req: Option<Req>) -> (Sender, Reply) {
