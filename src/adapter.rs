@@ -39,6 +39,6 @@ impl Adapter for MemoryAdapter {
 
   fn delete(&self, _id: &str, _params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)> {
     // TODO
-    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
+    ok(JsonValue::String("foo".to_string())).boxed()
   }
 }

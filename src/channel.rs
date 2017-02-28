@@ -4,22 +4,21 @@ use futures;
 use hyper::Chunk;
 use std::sync::Mutex;
 
-type ChunkSender = futures::sync::mpsc::UnboundedSender<Chunk>;
+type ValueSender = futures::sync::mpsc::UnboundedSender<JsonValue>;
 
 pub struct Sender {
-  inner: ChunkSender,
+  inner: ValueSender,
 }
 
 impl Sender {
-  pub fn new(chunk_sender: ChunkSender) -> Sender {
+  pub fn new(chunk_sender: ValueSender) -> Sender {
     Sender {
       inner: chunk_sender,
     }
   }
 
   pub fn send(&mut self, val: JsonValue) -> Result<(), ()> {
-    let wrapped_str = format!("data:{}\n\n", val);
-    self.inner.send(wrapped_str.into()).map_err(|_| ())
+    self.inner.send(val).map_err(|_| ())
   }
 }
 

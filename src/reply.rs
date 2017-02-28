@@ -11,7 +11,7 @@ use futures::sync::mpsc;
 use Sender;
 use std::sync::Arc;
 
-type MpscReceiver = BoxStream<HyperChunk, ()>;
+type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
 pub struct Reply {
   data: ReplyData,
@@ -21,7 +21,7 @@ pub struct Reply {
 
 enum ReplyData {
   Value(JsonValue),
-  Stream(MpscReceiver),
+  Stream(ChunkReceiver),
 }
 
 impl Reply {
@@ -54,9 +54,18 @@ impl Reply {
 
   pub fn new_streamed(code: i64, req: Option<Req>, filter: Arc<Box<Filter>>) -> (Sender, Reply) {
     let (tx, rx) = mpsc::unbounded();
-    let rx = rx.filter(|item: &HyperChunk| -> bool {
-      item.len() != 10
-    }).boxed();
+    let rx = rx
+      .filter(|item: &JsonValue| -> bool {
+        if let &JsonValue::Array(_) = item {
+          true
+        } else {
+          false
+        }
+      })
+      .map(|val| -> HyperChunk {
+        format!("data:{}\n\n", val).into()
+      })
+      .boxed();
     let reply = Reply {
       code: code,
       req: req,
@@ -70,7 +79,7 @@ impl Reply {
 /// A `Stream` for `HyperChunk`s used in requests and responses.
 pub enum Body {
   Once(Option<HyperChunk>),
-  Stream(MpscReceiver),
+  Stream(ChunkReceiver),
 }
 
 impl Stream for Body {
