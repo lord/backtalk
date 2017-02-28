@@ -51,6 +51,7 @@ impl Resource {
     let channel = self.channel.clone();
     let channel2 = self.channel.clone();
     let after = self.after.clone();
+    let after2 = self.after.clone();
 
     req.and_then(move |req| {
       let res = match (req.method().clone(), req.id().clone()) {
@@ -69,7 +70,7 @@ impl Resource {
           return match channel {
             None => make_err("no channel installed"),
             Some(chan) => {
-              let (sender, reply) = Reply::new_streamed(200, Some(req));
+              let (sender, reply) = Reply::new_streamed(200, Some(req), after);
               chan.join(sender);
               ok(reply).boxed()
             }
@@ -90,7 +91,7 @@ impl Resource {
         },
         Err((code, val)) => Err(req.into_reply(code, val)),
       }).boxed()
-    }).and_then(move |reply| after.handle(reply)).boxed()
+    }).and_then(move |reply| after2.handle(reply)).boxed()
   }
 }
 

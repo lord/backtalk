@@ -1,4 +1,4 @@
-use super::{JsonValue, Req};
+use super::{JsonValue, Req, Filter};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
@@ -6,10 +6,12 @@ use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper;
 use hyper::Chunk as HyperChunk;
 use futures::{Poll, Stream, Async};
+use futures::stream::BoxStream;
 use futures::sync::mpsc;
 use Sender;
+use std::sync::Arc;
 
-type MpscReceiver = mpsc::UnboundedReceiver<HyperChunk>;
+type MpscReceiver = BoxStream<HyperChunk, ()>;
 
 pub struct Reply {
   data: ReplyData,
@@ -50,8 +52,11 @@ impl Reply {
     }
   }
 
-  pub fn new_streamed(code: i64, req: Option<Req>) -> (Sender, Reply) {
+  pub fn new_streamed(code: i64, req: Option<Req>, filter: Arc<Box<Filter>>) -> (Sender, Reply) {
     let (tx, rx) = mpsc::unbounded();
+    let rx = rx.filter(|item: &HyperChunk| -> bool {
+      item.len() != 10
+    }).boxed();
     let reply = Reply {
       code: code,
       req: req,
