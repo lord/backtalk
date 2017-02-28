@@ -5,11 +5,13 @@ use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper;
 use hyper::Chunk as HyperChunk;
-use futures::{Poll, Stream, Async};
+use futures::{Poll, Stream, Async, Future};
 use futures::stream::BoxStream;
+use futures::future::BoxFuture;
 use futures::sync::mpsc;
 use Sender;
 use std::sync::Arc;
+use futures;
 
 type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
@@ -55,12 +57,24 @@ impl Reply {
   pub fn new_streamed(code: i64, req: Option<Req>, filter: Arc<Box<Filter>>) -> (Sender, Reply) {
     let (tx, rx) = mpsc::unbounded();
     let rx = rx
-      .filter(|item: &JsonValue| -> bool {
-        if let &JsonValue::Array(_) = item {
-          true
-        } else {
-          false
-        }
+      .and_then(move |item: JsonValue| -> BoxFuture<Option<JsonValue>, ()> {
+        let rep = Reply {
+          code: 200,
+          req: None, // TODO
+          data: ReplyData::Value(item),
+        };
+        filter.handle(rep).then(|filter_res| -> Result<Option<JsonValue>, ()> {
+          match filter_res {
+            Ok(rep) => match rep.data {
+              ReplyData::Value(dat) => Ok(Some(dat)),
+              _ => Ok(None),
+            },
+            Err(_) => Ok(None),
+          }
+        }).boxed()
+      })
+      .filter_map(|item: Option<JsonValue>| -> Option<JsonValue> {
+        item
       })
       .map(|val| -> HyperChunk {
         format!("data:{}\n\n", val).into()
