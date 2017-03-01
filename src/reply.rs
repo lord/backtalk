@@ -1,4 +1,4 @@
-use super::{JsonValue, Req, Filter};
+use super::{JsonValue, Req};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};

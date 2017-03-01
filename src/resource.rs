@@ -6,8 +6,8 @@ use super::{Adapter, Reply, Req, JsonValue, Method, Channel};
 
 pub struct Resource {
   adapter: Arc<Box<Adapter>>,
-  before: Arc<Box<Guard>>,
-  after: Arc<Box<Filter>>,
+  before: Arc<Box<Before>>,
+  after: Arc<Box<After>>,
   actions: Arc<HashMap<String, Box<Action>>>,
   channel: Option<Arc<Box<Channel>>>,
 }
@@ -16,8 +16,8 @@ impl Resource {
   pub fn new<T: Adapter + 'static>(adapt: T) -> Resource {
     Resource {
       adapter: Arc::new(Box::new(adapt)),
-      before: Arc::new(Box::new(NoGuard{})),
-      after: Arc::new(Box::new(NoFilter{})),
+      before: Arc::new(Box::new(NoBefore{})),
+      after: Arc::new(Box::new(NoAfter{})),
       actions: Arc::new(HashMap::new()),
       channel: None,
     }
@@ -27,11 +27,11 @@ impl Resource {
     self.channel = Some(Arc::new(Box::new(chan)));
   }
 
-  pub fn before<T: Guard + 'static>(&mut self, hook: T) {
+  pub fn before<T: Before + 'static>(&mut self, hook: T) {
     self.before = Arc::new(Box::new(hook));
   }
 
-  pub fn after<T: Filter + 'static>(&mut self, hook: T) {
+  pub fn after<T: After + 'static>(&mut self, hook: T) {
     self.after = Arc::new(Box::new(hook));
   }
 
@@ -95,35 +95,35 @@ impl Resource {
 }
 
 // TODO ALLOW HOOKS TO RETURN ANY KIND OF FUTURE? so we avoid double boxed allocations
-pub trait Guard: Sync + Send {
+pub trait Before: Sync + Send {
   fn handle(&self, Req) -> BoxFuture<Req, Reply>;
 }
 
-impl <T> Guard for T where T: Fn(Req) -> BoxFuture<Req, Reply> + Send + Sync {
+impl <T> Before for T where T: Fn(Req) -> BoxFuture<Req, Reply> + Send + Sync {
   fn handle(&self, r: Req) -> BoxFuture<Req, Reply> {
     self(r)
   }
 }
 
-struct NoGuard {}
-impl Guard for NoGuard {
+struct NoBefore {}
+impl Before for NoBefore {
   fn handle(&self, r: Req) -> BoxFuture<Req, Reply> {
     ok(r).boxed()
   }
 }
 
-pub trait Filter: Sync + Send {
+pub trait After: Sync + Send {
   fn handle(&self, Reply) -> BoxFuture<Reply, Reply>;
 }
 
-impl <T> Filter for T where T: Fn(Reply) -> BoxFuture<Reply, Reply> + Send + Sync {
+impl <T> After for T where T: Fn(Reply) -> BoxFuture<Reply, Reply> + Send + Sync {
   fn handle(&self, r: Reply) -> BoxFuture<Reply, Reply> {
     self(r)
   }
 }
 
-struct NoFilter {}
-impl Filter for NoFilter {
+struct NoAfter {}
+impl After for NoAfter {
   fn handle(&self, r: Reply) -> BoxFuture<Reply, Reply> {
     ok(r).boxed()
   }

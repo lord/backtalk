@@ -21,7 +21,7 @@ mod adapter;
 pub use adapter::{Adapter, MemoryAdapter}; // TODO memory adapter should probably eventually go in its own crate
 
 mod resource;
-pub use resource::{Resource, Guard, Filter};
+pub use resource::{Resource, Before, After};
 
 mod channel;
 pub use channel::{Channel, Sender, BroadcastChannel};
