@@ -44,15 +44,13 @@ impl Resource {
       err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())]))).boxed()
     }
 
-    let req = self.before.handle(req);
-
     let adapter = self.adapter.clone();
     let actions = self.actions.clone();
     let channel = self.channel.clone();
     let channel2 = self.channel.clone();
     let after = self.after.clone();
 
-    req.and_then(move |req| {
+    self.before.handle(req).and_then(move |req| {
       let res = match (req.method().clone(), req.id().clone()) {
         (Method::List, _) => adapter.find(req.params()),
         (Method::Post, _) => adapter.post(req.data(), req.params()),
