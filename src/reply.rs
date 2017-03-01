@@ -54,28 +54,9 @@ impl Reply {
     }
   }
 
-  pub fn new_streamed(code: i64, req: Option<Req>, filter: Arc<Box<Filter>>) -> (Sender, Reply) {
+  pub fn new_streamed(code: i64, req: Option<Req>) -> (Sender, Reply) {
     let (tx, rx) = mpsc::unbounded();
     let rx = rx
-      .and_then(move |item: JsonValue| {
-        let rep = Reply {
-          code: 200,
-          req: None, // TODO
-          data: ReplyData::Value(item),
-        };
-        filter.handle(rep).then(|filter_res| -> Result<Option<JsonValue>, ()> {
-          match filter_res {
-            Ok(rep) => match rep.data {
-              ReplyData::Value(dat) => Ok(Some(dat)),
-              _ => Ok(None),
-            },
-            Err(_) => Ok(None),
-          }
-        })
-      })
-      .filter_map(|item: Option<JsonValue>| -> Option<JsonValue> {
-        item
-      })
       .map(|val| -> HyperChunk {
         format!("data:{}\n\n", val).into()
       })

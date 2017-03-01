@@ -1,11 +1,15 @@
 ## Tasks
 
 - [x] maybe `Filter` can apply to outgoing messages too? annoying to have to implement separate security systems for events and requests.
+- [ ] really, there are many things you'd want to do besides just filter. maybe create a `Hook`, that is similar to a Filter, but is run before sending messages, and doesn't get run on data outside? the word `Filter` is kinda misleading.
 - [ ] better errors
 - [ ] some sort of `feathers-reactive` inspired library for data sync, which is pretty much the main reason to have this stuff. maybe also look at how feathers uses rethinkdb and does subscriptions with that, there may be something to learn.
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
 - [ ] also right now we're throwing away the item ids on LISTEN commands
+- [ ] better Reply API that makes it easier to access and manipulate results? maybe it should have things like pagination data directly in the Reply object?
 - [ ] finish implementing MemoryAdapter
+- [ ] use https://github.com/jonhoo/bus for broadcastchannel
+- [ ] think about using types? maybe?
 
 ## Debts
 
