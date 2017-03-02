@@ -1,4 +1,4 @@
-use super::{Params, Request, Reply, Method};
+use {Params, Request, Reply, Method};
 use futures::{BoxFuture, Future};
 use futures::future::ok;
 use serde_json::Value as JsonValue;

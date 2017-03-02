@@ -1,6 +1,4 @@
-use ::JsonValue;
-use ::Request;
-use ::Reply;
+use {JsonValue, Request, Reply};
 use futures::Future;
 use futures;
 use futures::future::ok;

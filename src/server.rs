@@ -1,4 +1,4 @@
-use super::{JsonValue, Reply, Request, Resource, Method};
+use {JsonValue, Reply, Request, Resource, Method};
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
