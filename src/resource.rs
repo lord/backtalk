@@ -1,8 +1,5 @@
-use futures::{BoxFuture, Future};
-use futures::future::{ok, err};
-use std::sync::Arc;
-use std::collections::HashMap;
-use super::{Adapter, Reply, Req, JsonValue, Method, Channel};
+use futures::BoxFuture;
+use {Reply, Req};
 
 pub trait Resource: Send + Sync {
   fn handle(&self, req: Req) -> BoxFuture<Reply, Reply>;

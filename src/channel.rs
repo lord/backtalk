@@ -6,7 +6,6 @@ use futures::Future;
 use futures;
 use futures::future::ok;
 use futures::future::BoxFuture;
-use hyper::Chunk;
 use std::sync::Mutex;
 
 type ValueSender = futures::sync::mpsc::UnboundedSender<JsonValue>;

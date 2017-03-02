@@ -1,8 +1,8 @@
 ## For first draft
 
-- [ ] `Resource` is just a closure that maps requests to replies, and is a trait. You implement `handle` yourself.
-- [ ] `Channel` has a `handle` default method that returns a (streaming bodied) Reply from a Request.
-- [ ] `Adapter` has a `handle` default method that returns a Reply from a Request.
+- [x] `Resource` is just a closure that maps requests to replies, and is a trait. You implement `handle` yourself.
+- [x] `Channel` has a `handle` default method that returns a (streaming bodied) Reply from a Request.
+- [x] `Adapter` has a `handle` default method that returns a Reply from a Request.
 - [ ] refine Request and Reply APIs, maybe allow for non-JSON responses?
 - [ ] add `route` to `Server` for a Req->Resp closure that doesn't bind to all the additional other URLs?
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.

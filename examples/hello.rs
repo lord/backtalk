@@ -2,8 +2,6 @@ extern crate backtalk;
 extern crate futures;
 
 use backtalk::*;
-use futures::{BoxFuture, Future};
-use futures::future::ok;
 
 fn main() {
   let mut s = Server::new();

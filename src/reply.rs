@@ -1,17 +1,14 @@
-use super::{JsonValue, Req, Channel};
+use {JsonValue, Req};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 use hyper;
 use hyper::Chunk as HyperChunk;
-use futures::{Poll, Stream, Async, Future};
+use futures::{Poll, Stream, Async};
 use futures::stream::BoxStream;
-use futures::future::BoxFuture;
 use futures::sync::mpsc;
 use Sender;
-use std::sync::Arc;
-use futures;
 
 type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
