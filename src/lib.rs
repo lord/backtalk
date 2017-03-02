@@ -8,8 +8,8 @@ use serde_json::Value as JsonValue;
 
 pub type Params = serde_json::value::Map<String, JsonValue>;
 
-mod req;
-pub use req::{Req, Method};
+mod request;
+pub use request::{Request, Method};
 
 mod server;
 pub use server::Server;

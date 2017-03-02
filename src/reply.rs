@@ -1,4 +1,4 @@
-use {JsonValue, Req};
+use {JsonValue, Request};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
@@ -15,7 +15,7 @@ type ChunkReceiver = BoxStream<HyperChunk, ()>;
 pub struct Reply {
   data: ReplyData,
   code: i64, // TODO replace with enum of errors, etc
-  req: Option<Req>,
+  req: Option<Request>,
 }
 
 enum ReplyData {
@@ -25,7 +25,7 @@ enum ReplyData {
 
 impl Reply {
   // TODO refine this? currently only really should be used internally.
-  pub fn new(code: i64, req: Option<Req>, data: JsonValue) -> Reply {
+  pub fn new(code: i64, req: Option<Request>, data: JsonValue) -> Reply {
     Reply {
       code: code,
       req: req,
@@ -58,7 +58,7 @@ impl Reply {
     }
   }
 
-  pub fn new_streamed(code: i64, req: Option<Req>) -> (Sender, Reply) {
+  pub fn new_streamed(code: i64, req: Option<Request>) -> (Sender, Reply) {
     let (tx, rx) = mpsc::unbounded();
     let rx = rx
       .map(|val| -> HyperChunk {

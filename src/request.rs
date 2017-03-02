@@ -14,7 +14,7 @@ pub enum Method {
 }
 
 #[derive(Debug)]
-pub struct Req {
+pub struct Request {
   id: Option<String>,
   params: Params,
   data: JsonValue,
@@ -22,9 +22,9 @@ pub struct Req {
   method: Method,
 }
 
-impl Req {
-  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonValue, params: Params) -> Req {
-    Req {
+impl Request {
+  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonValue, params: Params) -> Request {
+    Request {
       resource: resource,
       method: method,
       id: id,

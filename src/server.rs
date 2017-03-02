@@ -1,4 +1,4 @@
-use super::{JsonValue, Reply, Req, Resource, Method};
+use super::{JsonValue, Reply, Request, Resource, Method};
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ use serde_json::Map;
 use serde_json;
 use reply::Body;
 
-pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Req, Reply> {
+pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Request, Reply> {
   let default_accept = Accept::star();
   let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
   // TODO better and actually spec compliant Accept header matching
@@ -31,7 +31,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
     (best_qual, is_eventsource)
   });
 
-  fn err(err_str: &str) -> Result<Req, Reply> {
+  fn err(err_str: &str) -> Result<Request, Reply> {
     Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
   }
   let body = if let Some(b) = body {
@@ -65,7 +65,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
     if is_eventsource { // TODO should only work for GET? 403 otherwise? better spec compliance
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Listen,
         None,
@@ -73,7 +73,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else if method == &HttpMethod::Get {
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::List,
         None,
@@ -81,7 +81,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else if method == &HttpMethod::Post {
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Post,
         None,
@@ -100,7 +100,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
     if is_eventsource { // TODO should only work for GET? 403 otherwise? better spec compliance
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Listen,
         Some(id.to_string()),
@@ -108,7 +108,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else if method == &HttpMethod::Get {
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Get,
         Some(id.to_string()),
@@ -116,7 +116,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else if method == &HttpMethod::Patch {
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Patch,
         Some(id.to_string()),
@@ -124,7 +124,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else if method == &HttpMethod::Delete {
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Delete,
         Some(id.to_string()),
@@ -144,7 +144,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
     if method == &HttpMethod::Post {
-      return Ok(Req::new(
+      return Ok(Request::new(
         resource_url,
         Method::Action(action_name.to_string()),
         Some(id.to_string()),
@@ -207,7 +207,7 @@ impl Server {
     self.route_table.get(s).is_some()
   }
 
-  pub fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
+  pub fn handle(&self, req: Request) -> BoxFuture<Reply, Reply> {
     // TODO maybe instead do some sort of indexing instead of all this string hashing, so like, the webhooks calls get_route_ref or something
     match self.route_table.get(req.resource()) {
       Some(resource) => resource.handle(req),

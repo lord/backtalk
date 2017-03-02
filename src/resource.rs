@@ -1,12 +1,12 @@
 use futures::BoxFuture;
-use {Reply, Req};
+use {Reply, Request};
 
 pub trait Resource: Send + Sync {
-  fn handle(&self, req: Req) -> BoxFuture<Reply, Reply>;
+  fn handle(&self, req: Request) -> BoxFuture<Reply, Reply>;
 }
 
-impl <T> Resource for T where T: Fn(Req) -> BoxFuture<Reply, Reply> + Send + Sync {
-  fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
+impl <T> Resource for T where T: Fn(Request) -> BoxFuture<Reply, Reply> + Send + Sync {
+  fn handle(&self, req: Request) -> BoxFuture<Reply, Reply> {
     self(req)
   }
 }

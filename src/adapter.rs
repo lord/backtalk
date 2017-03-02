@@ -1,4 +1,4 @@
-use super::{Params, Req, Reply, Method};
+use super::{Params, Request, Reply, Method};
 use futures::{BoxFuture, Future};
 use futures::future::ok;
 use serde_json::Value as JsonValue;
@@ -12,7 +12,7 @@ pub trait Adapter: Send + Sync {
   fn patch(&self, id: &str, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
   fn delete(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (i64, JsonValue)>;
 
-  fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
+  fn handle(&self, req: Request) -> BoxFuture<Reply, Reply> {
     let res = match (req.method().clone(), req.id().clone()) {
       (Method::List, _) => self.find(req.params()),
       (Method::Post, _) => self.post(req.data(), req.params()),
