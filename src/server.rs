@@ -1,4 +1,4 @@
-use {JsonValue, Reply, Request, Resource, Method};
+use {JsonValue, Reply, Request, Resource, Method, Error, ErrorKind};
 use reply::make_reply;
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
@@ -16,7 +16,7 @@ use serde_json::Map;
 use serde_json;
 use reply::Body;
 
-pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Request, Reply> {
+pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Request, Error> {
   let default_accept = Accept::star();
   let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
   let (_, is_eventsource) = accepts.fold((0, false), |prev, ref quality_item| {
@@ -30,8 +30,8 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
     (best_qual, is_eventsource)
   });
 
-  fn err(err_str: &str) -> Result<Request, Reply> {
-    Err(make_reply(None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
+  fn err(err_str: &str) -> Result<Request, Error> {
+    Err(Error::new(ErrorKind::TODO, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
   }
   let body = if let Some(b) = body {
     b
@@ -206,11 +206,11 @@ impl Server {
     self.route_table.get(s).is_some()
   }
 
-  pub fn handle(&self, req: Request) -> BoxFuture<Reply, Reply> {
+  pub fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {
     // TODO maybe instead do some sort of indexing instead of all this string hashing, so like, the webhooks calls get_route_ref or something
     match self.route_table.get(req.resource()) {
       Some(resource) => resource.handle(req),
-      None => err(req.into_reply(JsonValue::String("TODO not found error here".to_string()))).boxed()
+      None => err(Error::new(ErrorKind::TODO, JsonValue::String("TODO not found error here".to_string()))).boxed()
     }
   }
 

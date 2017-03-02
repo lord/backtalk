@@ -11,6 +11,7 @@ pub struct Error {
 pub enum ErrorKind {
   Unauthorized,
   NotFound,
+  TODO,
 }
 
 impl Error {
