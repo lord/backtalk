@@ -8,6 +8,7 @@
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
 - [ ] also right now we're throwing away the item ids on LISTEN commands
 - [ ] finish implementing MemoryAdapter
+- [ ] server should maybe double check that the request is valid?
 
 ## The Only Objects Are
 
