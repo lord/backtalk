@@ -1,4 +1,4 @@
-use super::{JsonValue, Req};
+use super::{JsonValue, Req, Channel};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};

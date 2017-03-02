@@ -32,19 +32,20 @@ impl Resource {
       err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())]))).boxed()
     }
 
-    let res = match (req.method().clone(), req.id().clone()) {
-      (Method::Action(ref action_name), _) => {
+    match req.method().clone() {
+      Method::Action(ref action_name) => {
         // return match actions.get(action_name) {
         //   Some(action) => action.handle(req),
         //   None => make_err("action not found"),
         // }
         unimplemented!();
       },
-      (Method::Listen, id_opt) => {
-        unimplemented!();
+      Method::Listen => match &self.channel {
+        &Some(ref chan) => chan.handle(req),
+        &None => unimplemented!(),
       },
-      _ => return self.adapter.handle(req),
-    };
+      _ => self.adapter.handle(req),
+    }
   }
 }
 
