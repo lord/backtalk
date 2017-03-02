@@ -193,7 +193,7 @@ impl http::Service for HttpService {
 }
 
 pub struct Server {
-  route_table: HashMap<String, Resource>
+  route_table: HashMap<String, Box<Resource>>
 }
 
 impl Server {
@@ -215,8 +215,8 @@ impl Server {
     }
   }
 
-  pub fn mount<T: Into<String>>(&mut self, route: T, resource: Resource) {
-    self.route_table.insert(route.into(), resource);
+  pub fn resource<T: Into<String>, R: Resource + 'static>(&mut self, route: T, resource: R) {
+    self.route_table.insert(route.into(), Box::new(resource));
   }
 
   pub fn listen<T: Into<String> + Send + 'static>(self, bind_addr: T) {
