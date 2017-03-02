@@ -29,7 +29,7 @@ pub trait Channel: Send + Sync {
   fn send(&self, &JsonValue);
 
   fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {
-    let (sender, reply) = make_streamed_reply(Some(req));
+    let (sender, reply) = make_streamed_reply(req);
     self.join(sender);
     ok(reply).boxed()
   }

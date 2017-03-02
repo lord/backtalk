@@ -14,7 +14,7 @@ type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
 pub struct Reply {
   data: ReplyData,
-  req: Option<Request>,
+  req: Request,
 }
 
 enum ReplyData {
@@ -23,14 +23,14 @@ enum ReplyData {
 }
 
 // only used internally, by Response to make replies
-pub fn make_reply(req: Option<Request>, data: JsonValue) -> Reply {
+pub fn make_reply(req: Request, data: JsonValue) -> Reply {
   Reply {
     req: req,
     data: ReplyData::Value(data),
   }
 }
 
-pub fn make_streamed_reply(req: Option<Request>) -> (Sender, Reply) {
+pub fn make_streamed_reply(req: Request) -> (Sender, Reply) {
   let (tx, rx) = mpsc::unbounded();
   let rx = rx
     .map(|val| -> HyperChunk {

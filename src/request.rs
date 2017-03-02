@@ -35,7 +35,7 @@ impl Request {
   }
 
   pub fn into_reply(self, reply: JsonValue) -> Reply {
-    make_reply(Some(self), reply)
+    make_reply(self, reply)
   }
 
   pub fn method(&self) -> &Method {
