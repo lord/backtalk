@@ -30,7 +30,7 @@ impl Sender {
 
 pub trait Channel: Send + Sync {
   fn join(&self, Sender);
-  fn send(&self, Method, JsonValue);
+  fn send(&self, &JsonValue);
 
   fn handle(&self, req: Req) -> BoxFuture<Reply, Reply> {
     let (sender, reply) = Reply::new_streamed(200, Some(req));
@@ -56,7 +56,7 @@ impl Channel for BroadcastChannel {
     self.senders.lock().unwrap().push(sender)
   }
 
-  fn send(&self, _: Method, msg: JsonValue) {
+  fn send(&self, msg: &JsonValue) {
     for sender in self.senders.lock().unwrap().iter_mut() {
       sender.send(msg.clone());
     }

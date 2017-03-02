@@ -33,6 +33,13 @@ impl Reply {
     }
   }
 
+  pub fn data(&self) -> Option<&JsonValue> {
+    match self.data {
+      ReplyData::Value(ref dat) => Some(dat),
+      _ => None,
+    }
+  }
+
   pub fn to_http(self) -> http::Response<Body> {
     let resp = http::Response::new();
 
