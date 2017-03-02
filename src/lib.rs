@@ -18,7 +18,7 @@ mod reply;
 pub use reply::Reply;
 
 mod adapter;
-pub use adapter::{Adapter, MemoryAdapter}; // TODO memory adapter should probably eventually go in its own crate
+pub use adapter::{Adapter, MemoryAdapter};
 
 mod resource;
 pub use resource::{Resource};

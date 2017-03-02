@@ -56,9 +56,4 @@ impl Request {
   pub fn data(&self) -> &JsonValue {
     &self.data
   }
-
-  // TODO decide between params_mut and simple get and set methods
-
-  // TODO probably should move this into lib and have a better way (that supports tests) of creating requests
-  // maybe a separate function, in this module, that lib.rs doesn't export
 }

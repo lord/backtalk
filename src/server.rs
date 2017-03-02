@@ -18,8 +18,6 @@ use reply::Body;
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Request, Reply> {
   let default_accept = Accept::star();
   let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
-  // TODO better and actually spec compliant Accept header matching
-  // should throw error if can't return either eventsource or json
   let (_, is_eventsource) = accepts.fold((0, false), |prev, ref quality_item| {
     let (mut best_qual, mut is_eventsource) = prev;
     let this_quality = quality_item.quality.0;

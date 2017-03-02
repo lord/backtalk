@@ -23,8 +23,6 @@ impl Sender {
   }
 }
 
-// TODO also maybe would be nice to be able to store authentication information somewhere here
-
 pub trait Channel: Send + Sync {
   fn join(&self, Sender);
   fn send(&self, &JsonValue);

@@ -14,7 +14,7 @@ type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
 pub struct Reply {
   data: ReplyData,
-  code: i64, // TODO replace with enum of errors, etc
+  code: i64,
   req: Option<Request>,
 }
 
@@ -24,7 +24,6 @@ enum ReplyData {
 }
 
 impl Reply {
-  // TODO refine this? currently only really should be used internally.
   pub fn new(code: i64, req: Option<Request>, data: JsonValue) -> Reply {
     Reply {
       code: code,
@@ -91,7 +90,7 @@ impl Stream for Body {
       &mut Body::Stream(ref mut stream) => {
         match stream.poll() {
           Ok(u) => Ok(u),
-          Err(()) => Err(HyperError::Incomplete) // TODO FIX THIS ERROR
+          Err(()) => Err(HyperError::Incomplete)
         }
       }
     }

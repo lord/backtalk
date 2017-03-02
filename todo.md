@@ -1,14 +1,26 @@
-## For first draft
+## For 0.1
 
-- [x] `Resource` is just a closure that maps requests to replies, and is a trait. You implement `handle` yourself.
-- [x] `Channel` has a `handle` default method that returns a (streaming bodied) Reply from a Request.
-- [x] `Adapter` has a `handle` default method that returns a Reply from a Request.
 - [ ] refine Request and Reply APIs, maybe allow for non-JSON responses?
+  - [ ] instead of response code, a enum?
+  - [ ] more convenience functions
+  - [ ] refine creation of replies, new_streamed should probably be inaccessible maybe? probably.
+  - [ ] way to create requests that supports tests
+  - [ ] decide between params_mut and simple get and set methods
+- [ ] should somehow indicate method to `Channel.send`, and it should somehow indicate that to client
+- [ ] move MemoryAdapter to its own crate, finish in a bit (http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/)
+- [ ] server should maybe double check that the request is valid?
+- [ ] reply body stream should not return Hyper::Incomplete, maybe find a better error message?
+- [ ] better error messages, maybe make an `Error` struct
+
+## For 0.2
+
+- [ ] figure out authentication story around `Channel`s
 - [ ] add `route` to `Server` for a Req->Resp closure that doesn't bind to all the additional other URLs?
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.
 - [ ] also right now we're throwing away the item ids on LISTEN commands
-- [ ] finish implementing MemoryAdapter
-- [ ] server should maybe double check that the request is valid?
+- [ ] should adapters accept a serializable object instead?
+- [ ] better and actually spec compliant Accept header matching, should throw error if can't return either eventsource or json
+- [ ] better and faster routing than hash matching
 
 ## The Only Objects Are
 
@@ -29,16 +41,3 @@
 - [ ] the other reason it is slow is because of all the `boxed` allocations. should ask if it's possible to remove those in irc or something. maybe do a test first to see if you don't assemble from the Vec dynamically if it will compile with only a single box? may be able to speed up all the code with macros. and eventually, maybe could do some sort of recursion to avoid boxes. maybe. eh. not quite sure.
 - [ ] server.rs should be split up and refactored
 - [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if broadcasting events in a resource only broadcasted to other clients with the same params
-
-// TODO: eventually should be https://docs.rs/futures/0.1/futures/future/trait.IntoFuture.html
-
-// TODO could a client continue the connection even after the 404? make sure not
-
-// don't support PUT? https://tools.ietf.org/html/rfc7396 and http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/
-
-// TODO be able to return a future of anything that can be IntoReply instead of just Reply?
-
-// TODO I think macros can help with reducing usage of BoxFuture which is slower?
-//      it would be cool if we used futures in a zero-cost way
-//      also, it would be nice if we didn't have to write ok(fut).boxed() everywhere
-//      see Rocket for inspiration
