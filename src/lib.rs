@@ -26,6 +26,9 @@ pub use resource::{Resource};
 mod channel;
 pub use channel::{Channel, Sender, BroadcastChannel};
 
+mod error;
+pub use error::{Error, ErrorKind};
+
 #[cfg(test)]
 mod tests {
   #[test]
