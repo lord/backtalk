@@ -1,4 +1,5 @@
 use {JsonValue, Reply, Request, Resource, Method};
+use reply::make_reply;
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
@@ -30,7 +31,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   });
 
   fn err(err_str: &str) -> Result<Request, Reply> {
-    Err(Reply::new(400, None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
+    Err(make_reply(None, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
   }
   let body = if let Some(b) = body {
     b
@@ -209,7 +210,7 @@ impl Server {
     // TODO maybe instead do some sort of indexing instead of all this string hashing, so like, the webhooks calls get_route_ref or something
     match self.route_table.get(req.resource()) {
       Some(resource) => resource.handle(req),
-      None => err(req.into_reply(404, JsonValue::String("TODO not found error here".to_string()))).boxed()
+      None => err(req.into_reply(JsonValue::String("TODO not found error here".to_string()))).boxed()
     }
   }
 

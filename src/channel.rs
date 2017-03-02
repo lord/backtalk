@@ -1,4 +1,5 @@
 use {JsonValue, Request, Reply};
+use reply::make_streamed_reply;
 use futures::Future;
 use futures;
 use futures::future::ok;
@@ -28,7 +29,7 @@ pub trait Channel: Send + Sync {
   fn send(&self, &JsonValue);
 
   fn handle(&self, req: Request) -> BoxFuture<Reply, Reply> {
-    let (sender, reply) = Reply::new_streamed(200, Some(req));
+    let (sender, reply) = make_streamed_reply(Some(req));
     self.join(sender);
     ok(reply).boxed()
   }

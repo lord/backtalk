@@ -1,4 +1,5 @@
 use super::{Params, JsonValue, Reply};
+use reply::make_reply;
 
 #[derive(Debug, Clone)]
 pub enum Method {
@@ -33,8 +34,8 @@ impl Request {
     }
   }
 
-  pub fn into_reply(self, code: i64, reply: JsonValue) -> Reply {
-    Reply::new(code, Some(self), reply)
+  pub fn into_reply(self, reply: JsonValue) -> Reply {
+    make_reply(Some(self), reply)
   }
 
   pub fn method(&self) -> &Method {
@@ -55,5 +56,9 @@ impl Request {
 
   pub fn data(&self) -> &JsonValue {
     &self.data
+  }
+
+  pub fn data_mut(&mut self) -> &mut JsonValue {
+    &mut self.data
   }
 }

@@ -14,7 +14,6 @@ type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
 pub struct Reply {
   data: ReplyData,
-  code: i64,
   req: Option<Request>,
 }
 
@@ -23,15 +22,30 @@ enum ReplyData {
   Stream(ChunkReceiver),
 }
 
-impl Reply {
-  pub fn new(code: i64, req: Option<Request>, data: JsonValue) -> Reply {
-    Reply {
-      code: code,
-      req: req,
-      data: ReplyData::Value(data),
-    }
+// only used internally, by Response to make replies
+pub fn make_reply(req: Option<Request>, data: JsonValue) -> Reply {
+  Reply {
+    req: req,
+    data: ReplyData::Value(data),
   }
+}
 
+pub fn make_streamed_reply(req: Option<Request>) -> (Sender, Reply) {
+  let (tx, rx) = mpsc::unbounded();
+  let rx = rx
+    .map(|val| -> HyperChunk {
+      format!("data:{}\n\n", val).into()
+    })
+    .boxed();
+  let reply = Reply {
+    req: req,
+    data: ReplyData::Stream(rx)
+  };
+  let sender = Sender::new(tx);
+  (sender, reply)
+}
+
+impl Reply {
   pub fn data(&self) -> Option<&JsonValue> {
     match self.data {
       ReplyData::Value(ref dat) => Some(dat),
@@ -57,21 +71,6 @@ impl Reply {
     }
   }
 
-  pub fn new_streamed(code: i64, req: Option<Request>) -> (Sender, Reply) {
-    let (tx, rx) = mpsc::unbounded();
-    let rx = rx
-      .map(|val| -> HyperChunk {
-        format!("data:{}\n\n", val).into()
-      })
-      .boxed();
-    let reply = Reply {
-      code: code,
-      req: req,
-      data: ReplyData::Stream(rx)
-    };
-    let sender = Sender::new(tx);
-    (sender, reply)
-  }
 }
 
 /// A `Stream` for `HyperChunk`s used in requests and responses.

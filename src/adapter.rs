@@ -20,8 +20,8 @@ pub trait Adapter: Send + Sync {
       _ => unimplemented!(),
     };
     res.then(move |res| match res {
-      Ok(val) => Ok(req.into_reply(200, val)),
-      Err((code, val)) => Err(req.into_reply(code, val)),
+      Ok(val) => Ok(req.into_reply(val)),
+      Err((code, val)) => Err(req.into_reply(val)),
     }).boxed()
   }
 }
