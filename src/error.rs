@@ -12,7 +12,7 @@ pub struct Error {
 pub enum ErrorKind {
   Unauthorized,
   Forbidden,
-  TooManyRequests,
+  RateLimited,
   NotFound,
   BadRequest,
   ServerError,
@@ -25,13 +25,26 @@ impl ErrorKind {
     match self {
       &ErrorKind::Unauthorized => StatusCode::Unauthorized,
       &ErrorKind::Forbidden => StatusCode::Forbidden,
-      &ErrorKind::TooManyRequests => StatusCode::TooManyRequests,
+      &ErrorKind::RateLimited => StatusCode::TooManyRequests,
       &ErrorKind::NotFound => StatusCode::NotFound,
       &ErrorKind::BadRequest => StatusCode::BadRequest,
       &ErrorKind::ServerError => StatusCode::InternalServerError,
       &ErrorKind::Unavailable => StatusCode::ServiceUnavailable,
       &ErrorKind::MethodNotAllowed => StatusCode::MethodNotAllowed,
     }
+  }
+
+  pub fn as_string(&self) -> String {
+    match self {
+      &ErrorKind::Unauthorized => "authorization",
+      &ErrorKind::Forbidden => "authorization",
+      &ErrorKind::RateLimited => "rate_limit",
+      &ErrorKind::NotFound => "not_found",
+      &ErrorKind::BadRequest => "bad_request",
+      &ErrorKind::ServerError => "server",
+      &ErrorKind::Unavailable => "server",
+      &ErrorKind::MethodNotAllowed => "bad_request",
+    }.to_string()
   }
 }
 
@@ -46,7 +59,6 @@ impl Error {
   pub fn to_http(self) -> http::Response<Body> {
     let resp = http::Response::new();
     let resp_str = self.data.to_string();
-    // TODO SET STATUS
     resp
       .with_status(self.kind.to_hyper_status())
       .with_header(ContentLength(resp_str.len() as u64))

@@ -12,9 +12,22 @@ use futures::Stream;
 use futures::future::FutureResult;
 use std::sync::Arc;
 use queryst::parse as query_parse;
-use serde_json::Map;
-use serde_json;
+use serde_json::value::Map;
 use reply::Body;
+use serde_json;
+
+fn std_error(kind: ErrorKind, err_str: &str) -> Error {
+  let val = json!({
+    "error": {
+      "type": kind.as_string(),
+      "message": err_str.to_string(),
+    }
+  });
+  Error::new(
+    kind,
+    val
+  )
+}
 
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Request, Error> {
   let default_accept = Accept::star();
@@ -30,30 +43,27 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
     (best_qual, is_eventsource)
   });
 
-  fn err(err_str: &str) -> Result<Request, Error> {
-    Err(Error::new(ErrorKind::BadRequest, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
-  }
   let body = if let Some(b) = body {
     b
   } else {
-    return err("TODO error in request body");
+    return Err(std_error(ErrorKind::BadRequest, "TODO error in request body"));
   };
   let body_str = match String::from_utf8(body) {
     Ok(s) => s,
-    _ => return err("TODO invalid unicode in request body"),
+    _ => return Err(std_error(ErrorKind::BadRequest, "TODO invalid unicode in request body")),
   };
   let body_obj = if body_str == "" {
     JsonValue::Null
   } else {
     match serde_json::from_str(&body_str) {
       Ok(o) => o,
-      _ => return err("TODO invalid JSON in request body"),
+      _ => return Err(std_error(ErrorKind::BadRequest, "TODO invalid json in request body")),
     }
   };
   let query = match query_parse(query) {
     Ok(JsonValue::Null) => Map::new(),
     Ok(JsonValue::Object(u)) => u,
-    _ => return err("failed to parse query string")
+    _ => return Err(std_error(ErrorKind::BadRequest, "TODO failed to parse query string"))
   };
   let mut parts: Vec<&str> = path.split("/").skip(1).collect();
   // remove trailing `/` part if present
@@ -88,17 +98,17 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else {
-      return err("TODO invalid http method")
+      return Err(std_error(ErrorKind::MethodNotAllowed, "invalid HTTP method for this URL"));
     }
   }
 
   let (id, parts) = match parts.split_last() {
     Some(t) => t,
-    None => return err("TODO 404 not found") // TODO this should be fixed
+    None => return Err(std_error(ErrorKind::NotFound, "resource not found"))
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
-    if is_eventsource { // TODO should only work for GET? 403 otherwise? better spec compliance
+    if is_eventsource { 
       return Ok(Request::new(
         resource_url,
         Method::Listen,
@@ -131,14 +141,14 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else {
-      return err("TODO invalid http method")
+      return Err(std_error(ErrorKind::MethodNotAllowed, "invalid HTTP method for this URL"));
     }
   }
 
   let action_name = id;
   let (id, parts) = match parts.split_last() {
     Some(t) => t,
-    None => return err("TODO 404 not found")
+    None => return Err(std_error(ErrorKind::NotFound, "resource not found"))
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
@@ -151,11 +161,11 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         query
       ))
     } else {
-      return err("TODO invalid http method")
+      return Err(std_error(ErrorKind::MethodNotAllowed, "invalid HTTP method for this URL"));
     }
   }
 
-  err("404 resource not found")
+  Err(std_error(ErrorKind::NotFound, "resource not found"))
 }
 
 // only one is created

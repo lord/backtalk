@@ -20,6 +20,7 @@
 - [ ] also right now we're throwing away the item ids on LISTEN commands
 - [ ] should adapters accept a serializable object instead?
 - [ ] better and actually spec compliant Accept header matching, should throw error if can't return either eventsource or json
+- [ ] is_eventsource in server should only work for GET? 403 otherwise? better spec compliance
 - [ ] better and faster routing than hash matching
 
 ## The Only Objects Are
