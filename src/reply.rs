@@ -2,8 +2,7 @@ use {JsonValue, Request};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
-use hyper::mime::{Mime, TopLevel, SubLevel};
-use hyper;
+use hyper::mime;
 use hyper::Chunk as HyperChunk;
 use futures::{Poll, Stream, Async};
 use futures::stream::BoxStream;
@@ -61,11 +60,24 @@ impl Reply {
         let resp_str = val.to_string();
         resp
           .with_header(ContentLength(resp_str.len() as u64))
+          .with_header(ContentType(
+            mime::Mime(
+              mime::TopLevel::Application,
+              mime::SubLevel::Json,
+              vec![(mime::Attr::Charset, mime::Value::Utf8)]
+            )
+          ))
           .with_body(Body::Once(Some(resp_str.into())))
       },
       ReplyData::Stream(stream) => {
         resp
-          .with_header(ContentType(Mime(TopLevel::Text, SubLevel::EventStream, vec![(hyper::mime::Attr::Charset, hyper::mime::Value::Utf8)])))
+          .with_header(ContentType(
+            mime::Mime(
+              mime::TopLevel::Text,
+              mime::SubLevel::EventStream,
+              vec![(mime::Attr::Charset, mime::Value::Utf8)]
+            )
+          ))
           .with_body(Body::Stream(stream))
       },
     }
