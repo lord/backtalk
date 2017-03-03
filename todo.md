@@ -22,6 +22,7 @@
 - [ ] better and actually spec compliant Accept header matching, should throw error if can't return either eventsource or json
 - [ ] is_eventsource in server should only work for GET? 403 otherwise? better spec compliance
 - [ ] better and faster routing than hash matching
+- [ ] multithreaded servers, refine performance — see https://blog.guillaume-gomez.fr/articles/2017-02-22+Rust+asynchronous+HTTP+server+with+tokio+and+hyper
 
 ## The Only Objects Are
 

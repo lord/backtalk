@@ -12,7 +12,7 @@ Backtalk is a web framework for Rust. It's currently **very incomplete, undocume
 - **Realtime** – expose a streaming API, and push live events to clients.
 - **Simple** – only a couple hundred lines of code.
 - **Opinionated** – exclusively for JSON-based RESTful APIs.
-- **Magicless** – no macros, and runs on stable Rust.
+- **Magicless** – no macros, no unsafe, runs on stable Rust.
 
 A simple server example:
 
