@@ -31,7 +31,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   });
 
   fn err(err_str: &str) -> Result<Request, Error> {
-    Err(Error::new(ErrorKind::TODO, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
+    Err(Error::new(ErrorKind::BadRequest, JsonValue::Array(vec![JsonValue::String("error!".to_string()), JsonValue::String(err_str.to_string())])))
   }
   let body = if let Some(b) = body {
     b
@@ -94,7 +94,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
 
   let (id, parts) = match parts.split_last() {
     Some(t) => t,
-    None => return err("TODO 404 not found")
+    None => return err("TODO 404 not found") // TODO this should be fixed
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
@@ -210,7 +210,7 @@ impl Server {
     // TODO maybe instead do some sort of indexing instead of all this string hashing, so like, the webhooks calls get_route_ref or something
     match self.route_table.get(req.resource()) {
       Some(resource) => resource.handle(req),
-      None => err(Error::new(ErrorKind::TODO, JsonValue::String("TODO not found error here".to_string()))).boxed()
+      None => err(Error::new(ErrorKind::NotFound, JsonValue::String("TODO not found error here".to_string()))).boxed()
     }
   }
 

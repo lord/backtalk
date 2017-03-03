@@ -1,16 +1,16 @@
 ## For 0.1
 
 - [ ] refine Request and Reply APIs, maybe allow for non-JSON responses?
-  - [ ] instead of response code, a enum?
+  - [x] instead of response code, a enum?
   - [ ] more convenience functions
-  - [ ] refine creation of replies, new_streamed should probably be inaccessible maybe? probably.
-  - [ ] way to create requests that supports tests
+  - [x] refine creation of replies, new_streamed should probably be inaccessible maybe? probably.
+  - [x] way to create requests that supports tests
   - [ ] decide between params_mut and simple get and set methods
 - [ ] should somehow indicate method to `Channel.send`, and it should somehow indicate that to client
 - [ ] move MemoryAdapter to its own crate, finish in a bit (http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/)
 - [ ] server should maybe double check that the request is valid?
 - [ ] reply body stream should not return Hyper::Incomplete, maybe find a better error message?
-- [ ] better error messages, maybe make an `Error` struct
+- [x] better error messages, maybe make an `Error` struct
 
 ## For 0.2
 
