@@ -54,6 +54,14 @@ impl Request {
     &self.params
   }
 
+  pub fn param(&self, key: &str) -> Option<&JsonValue> {
+    self.params.get(key)
+  }
+
+  pub fn set_param(&mut self, key: String, val: JsonValue) {
+    self.params.insert(key, val);
+  }
+
   pub fn data(&self) -> &JsonValue {
     &self.data
   }

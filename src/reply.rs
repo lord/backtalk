@@ -101,7 +101,7 @@ impl Stream for Body {
       &mut Body::Stream(ref mut stream) => {
         match stream.poll() {
           Ok(u) => Ok(u),
-          Err(()) => Err(HyperError::Incomplete)
+          Err(()) => Ok(Async::Ready(None)), // this probably can never happen?
         }
       }
     }

@@ -9,7 +9,7 @@
 - [ ] should somehow indicate method to `Channel.send`, and it should somehow indicate that to client
 - [ ] move MemoryAdapter to its own crate, finish in a bit (http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/)
 - [ ] server should maybe double check that the request is valid?
-- [ ] reply body stream should not return Hyper::Incomplete, maybe find a better error message?
+- [x] reply body stream should not return Hyper::Incomplete, maybe find a better error message?
 - [x] better error messages, maybe make an `Error` struct
 
 ## For 0.2
