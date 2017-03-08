@@ -1,12 +1,12 @@
 ## For 0.1
 
-- [ ] refine Request and Reply APIs, maybe allow for non-JSON responses?
+- [x] refine Request and Reply APIs, maybe allow for non-JSON responses?
   - [x] instead of response code, a enum?
-  - [ ] more convenience functions
+  - [x] more convenience functions
   - [x] refine creation of replies, new_streamed should probably be inaccessible maybe? probably.
   - [x] way to create requests that supports tests
-  - [ ] decide between params_mut and simple get and set methods
-- [ ] should somehow indicate method to `Channel.send`, and it should somehow indicate that to client
+  - [x] decide between params_mut and simple get and set methods
+- [x] should somehow indicate method to `Channel.send`, and it should somehow indicate that to client
 - [ ] move MemoryAdapter to its own crate, finish in a bit (http://williamdurand.fr/2014/02/14/please-do-not-patch-like-an-idiot/)
 - [ ] server should maybe double check that the request is valid?
 - [x] reply body stream should not return Hyper::Incomplete, maybe find a better error message?
@@ -14,6 +14,7 @@
 
 ## For 0.2
 
+- [ ] backtalk-util crate for functions like `send_from_reply` and other things that make it much easier to write resources.
 - [ ] figure out authentication story around `Channel`s
 - [ ] add `route` to `Server` for a Req->Resp closure that doesn't bind to all the additional other URLs?
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.

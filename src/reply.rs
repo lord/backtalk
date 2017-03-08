@@ -1,4 +1,4 @@
-use {JsonValue, Request};
+use {JsonValue, Request, Method, Params};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
@@ -52,6 +52,15 @@ impl Reply {
     }
   }
 
+  pub fn data_mut(&mut self) -> Option<&JsonValue> {
+    match self.data {
+      ReplyData::Value(ref mut dat) => Some(dat),
+      _ => None,
+    }
+  }
+
+  // TODO data_then accepts a function that returns a future<JsonValue, Error>
+
   pub fn to_http(self) -> http::Response<Body> {
     let resp = http::Response::new();
 
@@ -83,6 +92,29 @@ impl Reply {
     }
   }
 
+  pub fn method(&self) -> Method {
+    self.req.method()
+  }
+
+  pub fn resource(&self) -> &str {
+    &self.req.resource()
+  }
+
+  pub fn id(&self) -> &Option<String> {
+    &self.req.id()
+  }
+
+  pub fn params(&self) -> &Params {
+    &self.req.params()
+  }
+
+  pub fn param(&self, key: &str) -> Option<&JsonValue> {
+    self.req.param(key)
+  }
+
+  pub fn request_data(&self) -> &JsonValue {
+    self.req.data()
+  }
 }
 
 /// A `Stream` for `HyperChunk`s used in requests and responses.

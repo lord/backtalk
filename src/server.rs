@@ -1,5 +1,4 @@
 use {JsonValue, Reply, Request, Resource, Method, Error, ErrorKind};
-use reply::make_reply;
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;

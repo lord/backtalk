@@ -37,9 +37,11 @@ impl Request {
   pub fn into_reply(self, reply: JsonValue) -> Reply {
     make_reply(self, reply)
   }
+  
+  // TODO data_then accepts a function that returns a future<JsonValue, Error>
 
-  pub fn method(&self) -> &Method {
-    &self.method
+  pub fn method(&self) -> Method {
+    self.method.clone()
   }
 
   pub fn resource(&self) -> &str {
@@ -52,6 +54,10 @@ impl Request {
 
   pub fn params(&self) -> &Params {
     &self.params
+  }
+
+  pub fn params_mut(&mut self) -> &mut Params {
+    &mut self.params
   }
 
   pub fn param(&self, key: &str) -> Option<&JsonValue> {
