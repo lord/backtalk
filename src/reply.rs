@@ -32,8 +32,8 @@ pub fn make_reply(req: Request, data: JsonValue) -> Reply {
 pub fn make_streamed_reply(req: Request) -> (Sender, Reply) {
   let (tx, rx) = mpsc::unbounded();
   let rx = rx
-    .map(|val| -> HyperChunk {
-      format!("data:{}\n\n", val).into()
+    .map(|val: (String, JsonValue)| -> HyperChunk {
+      format!("event:{}\ndata:{}\n\n", val.0, val.1).into()
     })
     .boxed();
   let reply = Reply {

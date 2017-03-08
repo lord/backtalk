@@ -20,7 +20,7 @@ fn main() {
     let channel2 = channel.clone();
     res.map(move |reply| {
       if let Some(dat) = reply.data() {
-        channel2.send(dat);
+        channel2.send("test kind", dat);
       }
       reply
     }).boxed()
