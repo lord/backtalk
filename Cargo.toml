@@ -1,7 +1,7 @@
 [package]
 name = "backtalk"
 version = "0.1.0"
-authors = ["Robert Lord <robert@lord.io>"]
+authors = ["Robert Lord <hello@lord.io>"]
 
 [dependencies]
 futures = "0.1.9"
