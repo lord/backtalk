@@ -5,7 +5,7 @@ extern crate serde_json;
 extern crate hyper;
 extern crate queryst;
 
-use serde_json::Value as JsonValue;
+pub use serde_json::Value as JsonValue;
 
 pub type Params = serde_json::value::Map<String, JsonValue>;
 
@@ -19,13 +19,13 @@ mod reply;
 pub use reply::Reply;
 
 mod adapter;
-pub use adapter::{Adapter, MemoryAdapter};
+pub use adapter::Adapter;
 
 mod resource;
 pub use resource::{Resource};
 
 mod channel;
-pub use channel::{Channel, Sender, BroadcastChannel};
+pub use channel::{Channel, Sender};
 
 mod error;
 pub use error::{Error, ErrorKind};

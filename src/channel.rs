@@ -4,7 +4,6 @@ use futures::Future;
 use futures;
 use futures::future::ok;
 use futures::future::BoxFuture;
-use std::sync::Mutex;
 
 type ValueSender = futures::sync::mpsc::UnboundedSender<(String, JsonValue)>;
 
@@ -32,29 +31,5 @@ pub trait Channel: Send + Sync {
     let (sender, reply) = make_streamed_reply(req);
     self.join(sender);
     ok(reply).boxed()
-  }
-}
-
-pub struct BroadcastChannel {
-  senders: Mutex<Vec<Sender>>,
-}
-
-impl BroadcastChannel {
-  pub fn new() -> BroadcastChannel {
-    BroadcastChannel {
-      senders: Mutex::new(Vec::new()),
-    }
-  }
-}
-
-impl Channel for BroadcastChannel {
-  fn join(&self, sender: Sender) {
-    self.senders.lock().unwrap().push(sender)
-  }
-
-  fn send(&self, message_kind: &str, msg: &JsonValue) {
-    for sender in self.senders.lock().unwrap().iter_mut() {
-      sender.send(message_kind, msg.clone());
-    }
   }
 }
