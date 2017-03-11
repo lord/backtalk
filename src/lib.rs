@@ -30,6 +30,8 @@ pub use channel::{Channel, Sender};
 mod error;
 pub use error::{Error, ErrorKind};
 
+pub mod memory;
+
 #[cfg(test)]
 mod tests {
   #[test]
