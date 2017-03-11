@@ -1,19 +1,54 @@
-use futures::future::{Future, BoxFuture, ok};
+use futures::future::{Future, BoxFuture, ok, err};
 use {JsonValue, ErrorKind, Adapter, Params};
+use std::collections::HashMap;
+use std::sync::Mutex;
 
-#[derive(Clone)]
-pub struct MemoryAdapter {}
+fn std_error(kind: ErrorKind, err_str: &str) -> (ErrorKind, JsonValue) {
+  let val = json!({
+    "error": {
+      "type": kind.as_string(),
+      "message": err_str.to_string(),
+    }
+  });
+  (kind, val)
+}
+
+pub struct MemoryAdapter {
+  datastore: Mutex<HashMap<String, JsonValue>>,
+}
+
+impl MemoryAdapter {
+  pub fn new() -> MemoryAdapter {
+    MemoryAdapter {
+      datastore: Mutex::new(HashMap::new()),
+    }
+  }
+}
 
 impl Adapter for MemoryAdapter {
   fn find(&self, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
-  fn get(&self, _id: &str, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
-    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
+  fn get(&self, id: &str, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+    let datastore = self.datastore.lock().unwrap();
+    match datastore.get(id) {
+      Some(val) => ok(val.clone()).boxed(),
+      None => err(std_error(ErrorKind::NotFound, "couldn't find object with that id")).boxed(),
+    }
   }
 
-  fn post(&self, _data: &JsonValue, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn post(&self, data: &JsonValue, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+    // let datastore = self.datastore.lock().unwrap();
+    // let id = Uuid::new_v4().to_string();
+    // let map = match data.clone() {
+    //   JsonValue::Map(map) => map,
+    //   _ => err(std_error(ErrorKind::NotFound, "values must be maps")).boxed()
+    // };
+    // match datastore.insert(id) {
+    //   Some(val) => ok(val.clone()).boxed(),
+    //   None => err(std_error(ErrorKind::NotFound, "couldn't find object with that id")).boxed(),
+    // }
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 

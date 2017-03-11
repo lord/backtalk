@@ -4,6 +4,7 @@ extern crate tokio_core;
 extern crate serde_json;
 extern crate hyper;
 extern crate queryst;
+extern crate uuid;
 
 pub use serde_json::Value as JsonValue;
 

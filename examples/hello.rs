@@ -7,7 +7,7 @@ use futures::future::Future;
 
 fn main() {
   let mut s = Server::new();
-  let adapter = memory::MemoryAdapter{};
+  let adapter = memory::MemoryChannel::new();
   let channel = Arc::new(memory::MemoryChannel::new());
   s.resource("/hello", move |req: Request| {
     let res = match req.method().clone() {

@@ -1,4 +1,3 @@
-use futures::future::{Future, BoxFuture, ok};
 use {JsonValue, Sender, Channel};
 use std::sync::Mutex;
 

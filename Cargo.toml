@@ -9,3 +9,4 @@ tokio-core = "0.1"
 serde_json = "0.9.8"
 queryst = { git = "https://github.com/lord/queryst" }
 hyper = { git = "https://github.com/hyperium/hyper", rev = "6eb07539214644fbcfff6e950bfbc688bf4764c2" }
+uuid = { version = "0.4", features = ["v4"] }
