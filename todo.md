@@ -1,5 +1,7 @@
 ## For 0.2
 
+- [ ] should pass less JSON values around, since have to unwrap maps. instead, pass the maps around
+- [ ] return Reply or Request or Error directly by implementing IntoFuture
 - [ ] backtalk-util crate for functions like `send_from_reply` and other things that make it much easier to write resources.
 - [ ] figure out authentication story around `Channel`s
 - [ ] add `route` to `Server` for a Req->Resp closure that doesn't bind to all the additional other URLs?
