@@ -1,5 +1,7 @@
 extern crate backtalk;
 extern crate futures;
+#[macro_use]
+extern crate serde_json;
 
 use backtalk::*;
 use std::sync::Arc;
@@ -12,6 +14,12 @@ fn main() {
   });
   let adapter = memory::MemoryChannel::new();
   let channel = Arc::new(memory::MemoryChannel::new());
+  s.resource("/hello2", move |req: Request| {
+    req
+      .and_then(|req| {
+        req.into_reply(json!({"meow": "foobar"}))
+      }).boxed()
+  });
   s.resource("/hello", move |req: Request| {
     let res = match req.method().clone() {
       // Method::Action(ref action_name) => {

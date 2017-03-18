@@ -1,6 +1,6 @@
 use super::{Params, JsonValue, Reply, Error};
 use reply::make_reply;
-use futures::future::{IntoFuture, ok, FutureResult};
+use futures::future::{IntoFuture, ok, FutureResult, AndThen, BoxFuture, Future};
 
 #[derive(Debug, Clone)]
 pub enum Method {
@@ -75,6 +75,13 @@ impl Request {
 
   pub fn data_mut(&mut self) -> &mut JsonValue {
     &mut self.data
+  }
+
+  pub fn and_then<F, B>(self, f: F) -> AndThen<FutureResult<Request, Error>, B, F>
+    where F: FnOnce(Request) -> B,
+          B: IntoFuture<Error=Error>
+  {
+    ok::<Request, Error>(self).and_then(f)
   }
 }
 
