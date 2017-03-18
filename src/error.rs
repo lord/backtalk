@@ -1,9 +1,10 @@
-use JsonValue;
+use {JsonValue};
 use reply::Body;
 use hyper::server as http;
 use hyper::header::{ContentLength,ContentType};
 use hyper::mime;
 use hyper::status::StatusCode;
+use futures::future::{err, BoxFuture, Future};
 
 pub struct Error {
   data: JsonValue,
@@ -49,12 +50,47 @@ impl ErrorKind {
   }
 }
 
+fn std_error(kind: ErrorKind, err_str: &str) -> Error {
+  let val = json!({
+    "error": {
+      "type": kind.as_string(),
+      "message": err_str.to_string(),
+    }
+  });
+  Error::new(
+    kind,
+    val
+  )
+}
+
 impl Error {
   pub fn new(kind: ErrorKind, data: JsonValue) -> Error {
     Error {
       kind: kind,
       data: data,
     }
+  }
+
+  pub fn forbidden<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::Forbidden, msg)).boxed()
+  }
+  pub fn rate_limited<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::RateLimited, msg)).boxed()
+  }
+  pub fn not_found<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::NotFound, msg)).boxed()
+  }
+  pub fn bad_request<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::BadRequest, msg)).boxed()
+  }
+  pub fn server_error<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::ServerError, msg)).boxed()
+  }
+  pub fn unavailable<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::Unavailable, msg)).boxed()
+  }
+  pub fn method_not_allowed<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::MethodNotAllowed, msg)).boxed()
   }
 
   pub fn to_http(self) -> http::Response<Body> {

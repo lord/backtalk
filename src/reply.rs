@@ -1,10 +1,11 @@
-use {JsonValue, Request, Method, Params};
+use {JsonValue, Request, Method, Params, Error};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
 use hyper::mime;
 use hyper::Chunk as HyperChunk;
-use futures::{Poll, Stream, Async};
+use futures::{Poll, Stream, Async, IntoFuture};
+use futures::future::{ok, FutureResult};
 use futures::stream::BoxStream;
 use futures::sync::mpsc;
 use Sender;
@@ -114,6 +115,15 @@ impl Reply {
 
   pub fn request_data(&self) -> &JsonValue {
     self.req.data()
+  }
+}
+
+impl IntoFuture for Reply {
+  type Item = Reply;
+  type Error = Error;
+  type Future = FutureResult<Reply, Error>;
+  fn into_future(self) -> Self::Future {
+    ok(self)
   }
 }
 

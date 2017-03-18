@@ -7,6 +7,9 @@ use futures::future::Future;
 
 fn main() {
   let mut s = Server::new();
+  s.resource("/meow", |req: Request| {
+    Error::forbidden("not allowed! sorry.")
+  });
   let adapter = memory::MemoryChannel::new();
   let channel = Arc::new(memory::MemoryChannel::new());
   s.resource("/hello", move |req: Request| {

@@ -1,5 +1,6 @@
-use super::{Params, JsonValue, Reply};
+use super::{Params, JsonValue, Reply, Error};
 use reply::make_reply;
+use futures::future::{IntoFuture, ok, FutureResult};
 
 #[derive(Debug, Clone)]
 pub enum Method {
@@ -37,7 +38,7 @@ impl Request {
   pub fn into_reply(self, reply: JsonValue) -> Reply {
     make_reply(self, reply)
   }
-  
+
   // TODO data_then accepts a function that returns a future<JsonValue, Error>
 
   pub fn method(&self) -> Method {
@@ -76,3 +77,13 @@ impl Request {
     &mut self.data
   }
 }
+
+impl IntoFuture for Request {
+  type Item = Request;
+  type Error = Error;
+  type Future = FutureResult<Request, Error>;
+  fn into_future(self) -> Self::Future {
+    ok(self)
+  }
+}
+
