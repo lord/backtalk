@@ -18,7 +18,7 @@ fn main() {
     req
       .and_then(|req| {
         req.into_reply(json!({"meow": "foobar"}))
-      }).boxed()
+      })
   });
   s.resource("/hello", move |req: Request| {
     let res = match req.method().clone() {
@@ -34,7 +34,7 @@ fn main() {
         channel2.send("test kind", dat);
       }
       reply
-    }).boxed()
+    })
   });
   s.listen("127.0.0.1:3000");
 }
