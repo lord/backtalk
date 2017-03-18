@@ -7,6 +7,7 @@ extern crate queryst;
 extern crate uuid;
 
 pub use serde_json::Value as JsonValue;
+pub type JsonMap = serde_json::Map<String, JsonValue>; // TODO ADD THIS EVERYWHERE
 
 pub type Params = serde_json::value::Map<String, JsonValue>;
 
