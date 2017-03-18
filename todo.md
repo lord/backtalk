@@ -15,6 +15,8 @@
 - [ ] server should maybe double check that the request is valid?
 - [ ] multithreaded servers, refine performance — see https://blog.guillaume-gomez.fr/articles/2017-02-22+Rust+asynchronous+HTTP+server+with+tokio+and+hyper
 - [ ] combine std_error throughout into one function
+- [ ] make `Sender` be able to resend missed messages with the LastId header or whatever it's called
+- [ ] add tests
 
 ## The Only Objects Are
 
@@ -26,12 +28,3 @@
   - `Server`
   - `Req`
   - `Reply`
-
-## Debts
-
-- [ ] make `Sender` be able to resend missed messages with the LastId header or whatever it's called
-- [ ] should eventually make both websocket and http server run on the same event loop?
-- [ ] there are shared locks everywhere in the form of `Arc`s. should ask about passing references to a future, it's not like they need mutable access or anything. but getting rid of the arcs sped up the code 2x in a 2000-parallel-connection load test
-- [ ] the other reason it is slow is because of all the `boxed` allocations. should ask if it's possible to remove those in irc or something. maybe do a test first to see if you don't assemble from the Vec dynamically if it will compile with only a single box? may be able to speed up all the code with macros. and eventually, maybe could do some sort of recursion to avoid boxes. maybe. eh. not quite sure.
-- [ ] server.rs should be split up and refactored
-- [ ] add proper routing to `Server`, with RouteRef or something like that instead of a string. RouteRef would also contain, like, url params or something maybe? hmm. would be nice if broadcasting events in a resource only broadcasted to other clients with the same params
