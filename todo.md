@@ -1,9 +1,9 @@
 ## For 0.2
 
-- [ ] `and_then` on requests and replies
-- [ ] should pass less JSON values around, since have to unwrap maps. instead, pass the maps around
 - [x] return Reply or Request or Error directly by implementing IntoFuture
-- [ ] backtalk-util crate for functions like `send_from_reply` and other things that make it much easier to write resources.
+- [x] backtalk-util crate for functions like `send_from_reply` and other things that make it much easier to write resources.
+- [x] `and_then` on requests and replies
+- [ ] should pass less JSON values around, since have to unwrap maps. instead, pass the maps around. maybe make our own map type?
 - [ ] figure out authentication story around `Channel`s
 - [ ] add `route` to `Server` for a Req->Resp closure that doesn't bind to all the additional other URLs?
 - [ ] namespacing, so `company/<comp_id>/messages` can have a different realtime channel based on the company id. or basically just have a plan for a client to be able to customize exactly what messages they'll be getting.

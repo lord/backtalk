@@ -6,6 +6,7 @@ extern crate serde_json;
 use backtalk::*;
 use std::sync::Arc;
 use futures::future::Future;
+use std::ops::Deref;
 
 fn main() {
   let mut s = Server::new();
@@ -30,12 +31,7 @@ fn main() {
         Method::Listen => channel1.handle(req),
         _ => adapter.handle(req),
       })
-      .and_then(move |reply| {
-        if let Some(dat) = reply.data() {
-          channel2.send("test kind", dat);
-        }
-        reply
-      })
+      .and_then(move |reply| { util::send_from_reply(reply, channel2.deref()) })
   });
   s.listen("127.0.0.1:3000");
 }

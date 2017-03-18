@@ -15,6 +15,20 @@ pub enum Method {
   Action(String), // -> POST /resource/123/actionname
 }
 
+impl Method {
+  pub fn as_string(&self) -> String {
+    match self {
+      &Method::List => "list",
+      &Method::Get => "get",
+      &Method::Delete => "delete",
+      &Method::Post => "post",
+      &Method::Patch => "patch",
+      &Method::Listen => "listen",
+      &Method::Action(ref action) => action,
+    }.to_string()
+  }
+}
+
 #[derive(Debug)]
 pub struct Request {
   id: Option<String>,
