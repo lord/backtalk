@@ -20,7 +20,8 @@ impl Channel for MemoryChannel {
 
   fn send(&self, message_kind: &str, msg: &JsonObject) {
     for sender in self.senders.lock().unwrap().iter_mut() {
-      sender.send(message_kind, msg.clone());
+      // TODO maybe handle this bug?
+      let _res = sender.send(message_kind, msg.clone());
     }
   }
 }

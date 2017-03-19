@@ -1,6 +1,6 @@
 use super::{JsonObject, JsonValue, Reply, Error};
 use reply::make_reply;
-use futures::future::{IntoFuture, ok, FutureResult, AndThen, BoxFuture, Future};
+use futures::future::{IntoFuture, ok, FutureResult, AndThen, Future};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Method {

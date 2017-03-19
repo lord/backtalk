@@ -3,12 +3,10 @@ extern crate futures;
 
 use backtalk::*;
 use std::sync::Arc;
-use futures::future::Future;
-use std::ops::Deref;
 
 fn main() {
   let mut s = Server::new();
-  s.resource("/meow", |req: Request| {
+  s.resource("/meow", |_req: Request| {
     Error::forbidden("not allowed! sorry.")
   });
   let adapter = Arc::new(memory::MemoryAdapter::new());
@@ -22,11 +20,11 @@ fn main() {
   s.resource("/hello", move |req: Request| {
     let adapter = adapter.clone();
     let channel1 = channel.clone();
-    let channel2 = channel.clone();
+    // let channel2 = channel.clone();
     req
       .and_then(move |req| {
         match req.method().clone() {
-          Method::Action(ref action_name) => Error::forbidden("not allowed! sorry."),
+          Method::Action(_) => Error::forbidden("not allowed! sorry."),
           Method::Listen => channel1.handle(req),
           _ => adapter.handle(req),
         }

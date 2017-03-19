@@ -34,25 +34,25 @@ mod tests {
   struct TestAdapter;
 
   impl Adapter for TestAdapter {
-    fn list(&self, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    fn list(&self, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
       let mut obj = JsonObject::new();
       obj.insert("method".to_string(), JsonValue::String("find".to_string()));
       ok(obj).boxed()
     }
-    fn get(&self, id: &str, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    fn get(&self, _id: &str, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
       let mut obj = JsonObject::new();
       obj.insert("method".to_string(), JsonValue::String("get".to_string()));
       ok(obj).boxed()
     }
-    fn post(&self, data: &JsonObject, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    fn post(&self, _data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
       err((ErrorKind::ServerError, json!({"error": "testerror"}))).boxed()
     }
-    fn patch(&self, id: &str, data: &JsonObject, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    fn patch(&self, _id: &str, _data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
       let mut obj = JsonObject::new();
       obj.insert("method".to_string(), JsonValue::String("patch".to_string()));
       ok(obj).boxed()
     }
-    fn delete(&self, id: &str, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    fn delete(&self, _id: &str, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
       let mut obj = JsonObject::new();
       obj.insert("method".to_string(), JsonValue::String("delete".to_string()));
       ok(obj).boxed()
@@ -70,21 +70,24 @@ mod tests {
     assert!(res.data().unwrap().get("method").unwrap() == "find");
   }
 
+  #[test]
   fn adapter_can_get() {
     let adapter = TestAdapter{};
     let res = adapter.handle(make_req(Method::Get, Some("12"))).wait().unwrap();
     assert!(res.data().unwrap().get("method").unwrap() == "get");
   }
 
+  #[test]
   fn adapter_can_patch() {
     let adapter = TestAdapter{};
     let res = adapter.handle(make_req(Method::Patch, Some("12"))).wait().unwrap();
     assert!(res.data().unwrap().get("method").unwrap() == "patch");
   }
 
+  #[test]
   fn adapter_can_delete() {
     let adapter = TestAdapter{};
-    let res = adapter.handle(make_req(Method::Patch, Some("12"))).wait().unwrap();
+    let res = adapter.handle(make_req(Method::Delete, Some("12"))).wait().unwrap();
     assert!(res.data().unwrap().get("method").unwrap() == "delete");
   }
 
