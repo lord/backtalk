@@ -34,7 +34,7 @@ impl MemoryAdapter {
 }
 
 impl Adapter for MemoryAdapter {
-  fn find(&self, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+  fn list(&self, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
     ok(JsonObject::new()).boxed()
   }
 

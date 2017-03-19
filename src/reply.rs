@@ -1,4 +1,5 @@
 use {JsonValue, Request, Method, JsonObject, Error};
+use std::fmt;
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
@@ -12,6 +13,7 @@ use Sender;
 
 type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
+#[derive(Debug)]
 pub struct Reply {
   data: ReplyData,
   req: Request,
@@ -20,6 +22,15 @@ pub struct Reply {
 enum ReplyData {
   Value(JsonObject),
   Stream(ChunkReceiver),
+}
+
+impl fmt::Debug for ReplyData {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      &ReplyData::Value(ref val) => write!(f, "ReplyData::Value({:?})", val),
+      &ReplyData::Stream(_) => write!(f, "ReplyData::Stream(<stream>)"),
+    }
+  }
 }
 
 // only used internally, by Response to make replies

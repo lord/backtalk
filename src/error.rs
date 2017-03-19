@@ -6,11 +6,13 @@ use hyper::mime;
 use hyper::status::StatusCode;
 use futures::future::{err, BoxFuture, Future};
 
+#[derive(Debug)]
 pub struct Error {
   data: JsonValue,
   kind: ErrorKind,
 }
 
+#[derive(Debug)]
 pub enum ErrorKind {
   Unauthorized,
   Forbidden,

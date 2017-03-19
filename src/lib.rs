@@ -32,10 +32,3 @@ pub use error::{Error, ErrorKind};
 
 pub mod memory;
 pub mod util;
-
-#[cfg(test)]
-mod tests {
-  #[test]
-  fn it_works() {
-  }
-}
