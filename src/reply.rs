@@ -113,7 +113,7 @@ impl Reply {
     self.req.param(key)
   }
 
-  pub fn request_data(&self) -> &JsonValue {
+  pub fn request_data(&self) -> &JsonObject {
     self.req.data()
   }
 }

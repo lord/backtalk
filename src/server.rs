@@ -1,4 +1,4 @@
-use {JsonValue, Reply, Request, Resource, Method, Error, ErrorKind};
+use {JsonValue, JsonObject, Reply, Request, Resource, Method, Error, ErrorKind};
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
@@ -52,7 +52,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
     _ => return Err(std_error(ErrorKind::BadRequest, "TODO invalid unicode in request body")),
   };
   let body_obj = if body_str == "" {
-    JsonValue::Null
+    JsonObject::new()
   } else {
     match serde_json::from_str(&body_str) {
       Ok(o) => o,
@@ -77,7 +77,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         resource_url,
         Method::Listen,
         None,
-        JsonValue::Null,
+        JsonObject::new(),
         query
       ))
     } else if method == &HttpMethod::Get {
@@ -85,7 +85,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         resource_url,
         Method::List,
         None,
-        JsonValue::Null,
+        JsonObject::new(),
         query
       ))
     } else if method == &HttpMethod::Post {
@@ -112,7 +112,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         resource_url,
         Method::Listen,
         Some(id.to_string()),
-        JsonValue::Null,
+        JsonObject::new(),
         query
       ))
     } else if method == &HttpMethod::Get {
@@ -120,7 +120,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         resource_url,
         Method::Get,
         Some(id.to_string()),
-        JsonValue::Null,
+        JsonObject::new(),
         query
       ))
     } else if method == &HttpMethod::Patch {
@@ -136,7 +136,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         resource_url,
         Method::Delete,
         Some(id.to_string()),
-        JsonValue::Null,
+        JsonObject::new(),
         query
       ))
     } else {
@@ -156,7 +156,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
         resource_url,
         Method::Action(action_name.to_string()),
         Some(id.to_string()),
-        JsonValue::Null,
+        JsonObject::new(),
         query
       ))
     } else {

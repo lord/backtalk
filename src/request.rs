@@ -33,20 +33,19 @@ impl Method {
 pub struct Request {
   id: Option<String>,
   params: JsonObject,
-  data: JsonValue,
+  data: JsonObject,
   resource: String,
   method: Method,
 }
 
 impl Request {
-  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonValue, params: JsonObject) -> Request {
+  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonObject, params: JsonObject) -> Request {
     Request {
       resource: resource,
       method: method,
       id: id,
       data: data,
       params: params
-      
     }
   }
 
@@ -84,11 +83,11 @@ impl Request {
     self.params.insert(key, val);
   }
 
-  pub fn data(&self) -> &JsonValue {
+  pub fn data(&self) -> &JsonObject {
     &self.data
   }
 
-  pub fn data_mut(&mut self) -> &mut JsonValue {
+  pub fn data_mut(&mut self) -> &mut JsonObject {
     &mut self.data
   }
 

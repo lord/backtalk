@@ -38,7 +38,7 @@ impl Adapter for MemoryAdapter {
     }
   }
 
-  fn post(&self, data: &JsonValue, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn post(&self, data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     // let datastore = self.datastore.lock().unwrap();
     // let id = Uuid::new_v4().to_string();
     // let map = match data.clone() {
@@ -52,7 +52,7 @@ impl Adapter for MemoryAdapter {
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
-  fn patch(&self, _id: &str, _data: &JsonValue, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn patch(&self, _id: &str, _data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
