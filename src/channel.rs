@@ -1,4 +1,4 @@
-use {Request, Reply, Error, JsonObject};
+use {Request, Reply, Error, JsonObject, Method};
 use reply::make_streamed_reply;
 use futures::Future;
 use futures;
@@ -28,6 +28,9 @@ pub trait Channel: Send + Sync {
   fn send(&self, &str, &JsonObject);
 
   fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {
+    if req.method().clone() != Method::Listen {
+      return Error::server_error("passed a non-listen request to channel")
+    }
     let params = req.params().clone();
     let (sender, reply) = make_streamed_reply(req);
     self.join(sender, params);

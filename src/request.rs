@@ -2,7 +2,7 @@ use super::{JsonObject, JsonValue, Reply, Error};
 use reply::make_reply;
 use futures::future::{IntoFuture, ok, FutureResult, AndThen, BoxFuture, Future};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Method {
   // indempotent methods (must be able to call many times and it'll have the same effect/return value as just once)
   List, // -> GET /resource
