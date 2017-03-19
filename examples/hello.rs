@@ -11,7 +11,7 @@ fn main() {
   s.resource("/meow", |req: Request| {
     Error::forbidden("not allowed! sorry.")
   });
-  let adapter = Arc::new(memory::MemoryChannel::new());
+  let adapter = Arc::new(memory::MemoryAdapter::new());
   let channel = Arc::new(memory::MemoryChannel::new());
   s.resource("/hello2", move |req: Request| {
     req
@@ -24,12 +24,14 @@ fn main() {
     let channel1 = channel.clone();
     let channel2 = channel.clone();
     req
-      .and_then(move |req| match req.method().clone() {
-        Method::Action(ref action_name) => Error::forbidden("not allowed! sorry."),
-        Method::Listen => channel1.handle(req),
-        _ => adapter.handle(req),
+      .and_then(move |req| {
+        match req.method().clone() {
+          Method::Action(ref action_name) => Error::forbidden("not allowed! sorry."),
+          Method::Listen => channel1.handle(req),
+          _ => adapter.handle(req),
+        }
       })
-      .and_then(move |reply| { util::send_from_reply(reply, channel2.deref()) })
+      // .and_then(move |reply| { util::send_from_reply(reply, channel2.deref()) })
   });
   s.listen("127.0.0.1:3000");
 }
