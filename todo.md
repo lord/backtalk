@@ -5,6 +5,15 @@
 - [ ] also right now we're throwing away the item ids on LISTEN commands
 - [ ] multithreaded servers, refine performance — see https://blog.guillaume-gomez.fr/articles/2017-02-22+Rust+asynchronous+HTTP+server+with+tokio+and+hyper
 - [ ] add tests
+  - [x] adapter
+  - [ ] channel
+  - [ ] error
+  - [ ] reply
+  - [ ] request
+  - [ ] resource
+  - [ ] server (oh god)
+  - [ ] util
+  - [ ] memory
 - [ ] smarter params object? so you can guarantee it'll have `path`, etc, set, and don't have to unwrap
 
 ## Non-api-breaking later changes
