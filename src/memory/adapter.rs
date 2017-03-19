@@ -1,5 +1,5 @@
 use futures::future::{Future, BoxFuture, ok, err};
-use {JsonValue, ErrorKind, Adapter, Params};
+use {JsonValue, ErrorKind, Adapter, JsonObject};
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -26,11 +26,11 @@ impl MemoryAdapter {
 }
 
 impl Adapter for MemoryAdapter {
-  fn find(&self, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn find(&self, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
-  fn get(&self, id: &str, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn get(&self, id: &str, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     let datastore = self.datastore.lock().unwrap();
     match datastore.get(id) {
       Some(val) => ok(val.clone()).boxed(),
@@ -38,7 +38,7 @@ impl Adapter for MemoryAdapter {
     }
   }
 
-  fn post(&self, data: &JsonValue, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn post(&self, data: &JsonValue, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     // let datastore = self.datastore.lock().unwrap();
     // let id = Uuid::new_v4().to_string();
     // let map = match data.clone() {
@@ -52,11 +52,11 @@ impl Adapter for MemoryAdapter {
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
-  fn patch(&self, _id: &str, _data: &JsonValue, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn patch(&self, _id: &str, _data: &JsonValue, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
   }
 
-  fn delete(&self, _id: &str, _params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn delete(&self, _id: &str, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
     ok(JsonValue::String("foo".to_string())).boxed()
   }
 }

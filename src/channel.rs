@@ -1,4 +1,4 @@
-use {JsonValue, Request, Reply, Error, Params};
+use {JsonValue, Request, Reply, Error, JsonObject};
 use reply::make_streamed_reply;
 use futures::Future;
 use futures;
@@ -24,7 +24,7 @@ impl Sender {
 }
 
 pub trait Channel: Send + Sync {
-  fn join(&self, Sender, Params);
+  fn join(&self, Sender, JsonObject);
   fn send(&self, &str, &JsonValue);
 
   fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {

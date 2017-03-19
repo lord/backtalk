@@ -1,4 +1,4 @@
-use super::{Params, JsonValue, Reply, Error};
+use super::{JsonObject, JsonValue, Reply, Error};
 use reply::make_reply;
 use futures::future::{IntoFuture, ok, FutureResult, AndThen, BoxFuture, Future};
 
@@ -32,14 +32,14 @@ impl Method {
 #[derive(Debug)]
 pub struct Request {
   id: Option<String>,
-  params: Params,
+  params: JsonObject,
   data: JsonValue,
   resource: String,
   method: Method,
 }
 
 impl Request {
-  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonValue, params: Params) -> Request {
+  pub fn new(resource: String, method: Method, id: Option<String>, data: JsonValue, params: JsonObject) -> Request {
     Request {
       resource: resource,
       method: method,
@@ -68,11 +68,11 @@ impl Request {
     &self.id
   }
 
-  pub fn params(&self) -> &Params {
+  pub fn params(&self) -> &JsonObject {
     &self.params
   }
 
-  pub fn params_mut(&mut self) -> &mut Params {
+  pub fn params_mut(&mut self) -> &mut JsonObject {
     &mut self.params
   }
 

@@ -1,4 +1,4 @@
-use {JsonValue, Sender, Channel, Params};
+use {JsonValue, Sender, Channel, JsonObject};
 use std::sync::Mutex;
 
 pub struct MemoryChannel {
@@ -14,7 +14,7 @@ impl MemoryChannel {
 }
 
 impl Channel for MemoryChannel {
-  fn join(&self, sender: Sender, _: Params) {
+  fn join(&self, sender: Sender, _: JsonObject) {
     self.senders.lock().unwrap().push(sender)
   }
 

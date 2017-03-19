@@ -1,4 +1,4 @@
-use {JsonValue, Request, Method, Params, Error};
+use {JsonValue, Request, Method, JsonObject, Error};
 use hyper::server as http;
 use hyper::Error as HyperError;
 use hyper::header::{ContentLength, ContentType};
@@ -105,7 +105,7 @@ impl Reply {
     &self.req.id()
   }
 
-  pub fn params(&self) -> &Params {
+  pub fn params(&self) -> &JsonObject {
     &self.req.params()
   }
 

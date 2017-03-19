@@ -1,13 +1,13 @@
-use {Params, Request, Reply, Method, ErrorKind, Error};
+use {JsonObject, Request, Reply, Method, ErrorKind, Error};
 use futures::{BoxFuture, Future};
 use serde_json::Value as JsonValue;
 
 pub trait Adapter: Send + Sync {
-  fn find(&self, params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
-  fn get(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
-  fn post(&self, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
-  fn patch(&self, id: &str, data: &JsonValue, params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
-  fn delete(&self, id: &str, params: &Params) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
+  fn find(&self, params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
+  fn get(&self, id: &str, params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
+  fn post(&self, data: &JsonValue, params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
+  fn patch(&self, id: &str, data: &JsonValue, params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
+  fn delete(&self, id: &str, params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)>;
 
   fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {
     let res = match (req.method().clone(), req.id().clone()) {
