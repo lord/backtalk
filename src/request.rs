@@ -49,7 +49,7 @@ impl Request {
     }
   }
 
-  pub fn into_reply(self, reply: JsonValue) -> Reply {
+  pub fn into_reply(self, reply: JsonObject) -> Reply {
     make_reply(self, reply)
   }
 

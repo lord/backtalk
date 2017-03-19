@@ -1,7 +1,5 @@
 extern crate backtalk;
 extern crate futures;
-#[macro_use]
-extern crate serde_json;
 
 use backtalk::*;
 use std::sync::Arc;
@@ -18,7 +16,7 @@ fn main() {
   s.resource("/hello2", move |req: Request| {
     req
       .and_then(|req| {
-        req.into_reply(json!({"meow": "foobar"}))
+        req.into_reply(JsonObject::new())
       })
   });
   s.resource("/hello", move |req: Request| {

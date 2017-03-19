@@ -26,19 +26,20 @@ impl MemoryAdapter {
 }
 
 impl Adapter for MemoryAdapter {
-  fn find(&self, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
-    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
+  fn find(&self, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    ok(JsonObject::new()).boxed()
   }
 
-  fn get(&self, id: &str, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
-    let datastore = self.datastore.lock().unwrap();
-    match datastore.get(id) {
-      Some(val) => ok(val.clone()).boxed(),
-      None => err(std_error(ErrorKind::NotFound, "couldn't find object with that id")).boxed(),
-    }
+  fn get(&self, id: &str, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    // let datastore = self.datastore.lock().unwrap();
+    // match datastore.get(id) {
+    //   Some(val) => ok(val.clone()).boxed(),
+    //   None => err(std_error(ErrorKind::NotFound, "couldn't find object with that id")).boxed(),
+    // }
+    ok(JsonObject::new()).boxed()
   }
 
-  fn post(&self, data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
+  fn post(&self, data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
     // let datastore = self.datastore.lock().unwrap();
     // let id = Uuid::new_v4().to_string();
     // let map = match data.clone() {
@@ -49,14 +50,14 @@ impl Adapter for MemoryAdapter {
     //   Some(val) => ok(val.clone()).boxed(),
     //   None => err(std_error(ErrorKind::NotFound, "couldn't find object with that id")).boxed(),
     // }
-    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
+    ok(JsonObject::new()).boxed()
   }
 
-  fn patch(&self, _id: &str, _data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
-    ok(JsonValue::Array(vec![JsonValue::String("foo".to_string())])).boxed()
+  fn patch(&self, _id: &str, _data: &JsonObject, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    ok(JsonObject::new()).boxed()
   }
 
-  fn delete(&self, _id: &str, _params: &JsonObject) -> BoxFuture<JsonValue, (ErrorKind, JsonValue)> {
-    ok(JsonValue::String("foo".to_string())).boxed()
+  fn delete(&self, _id: &str, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    ok(JsonObject::new()).boxed()
   }
 }

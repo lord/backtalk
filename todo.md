@@ -1,7 +1,7 @@
 ## For initial launch
 
 - [x] figure out authentication story around `Channel`s
-- [ ] should pass less JSON values around, since have to unwrap maps. instead, pass the maps around. maybe make our own map type? we already have params
+- [x] should pass less JSON values around, since have to unwrap maps. instead, pass the maps around. maybe make our own map type? we already have params
 - [ ] also right now we're throwing away the item ids on LISTEN commands
 - [ ] multithreaded servers, refine performance — see https://blog.guillaume-gomez.fr/articles/2017-02-22+Rust+asynchronous+HTTP+server+with+tokio+and+hyper
 - [ ] add tests

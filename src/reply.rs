@@ -18,12 +18,12 @@ pub struct Reply {
 }
 
 enum ReplyData {
-  Value(JsonValue),
+  Value(JsonObject),
   Stream(ChunkReceiver),
 }
 
 // only used internally, by Response to make replies
-pub fn make_reply(req: Request, data: JsonValue) -> Reply {
+pub fn make_reply(req: Request, data: JsonObject) -> Reply {
   Reply {
     req: req,
     data: ReplyData::Value(data),
@@ -33,8 +33,8 @@ pub fn make_reply(req: Request, data: JsonValue) -> Reply {
 pub fn make_streamed_reply(req: Request) -> (Sender, Reply) {
   let (tx, rx) = mpsc::unbounded();
   let rx = rx
-    .map(|val: (String, JsonValue)| -> HyperChunk {
-      format!("event:{}\ndata:{}\n\n", val.0, val.1).into()
+    .map(|val: (String, JsonObject)| -> HyperChunk {
+      format!("event:{}\ndata:{}\n\n", val.0, JsonValue::Object(val.1)).into()
     })
     .boxed();
   let reply = Reply {
@@ -46,28 +46,28 @@ pub fn make_streamed_reply(req: Request) -> (Sender, Reply) {
 }
 
 impl Reply {
-  pub fn data(&self) -> Option<&JsonValue> {
+  pub fn data(&self) -> Option<&JsonObject> {
     match self.data {
       ReplyData::Value(ref dat) => Some(dat),
       _ => None,
     }
   }
 
-  pub fn data_mut(&mut self) -> Option<&JsonValue> {
+  pub fn data_mut(&mut self) -> Option<&mut JsonObject> {
     match self.data {
       ReplyData::Value(ref mut dat) => Some(dat),
       _ => None,
     }
   }
 
-  // TODO data_then accepts a function that returns a future<JsonValue, Error>
+  // TODO data_then accepts a function that returns a future<JsonObject, Error>
 
   pub fn to_http(self) -> http::Response<Body> {
     let resp = http::Response::new();
 
     match self.data {
       ReplyData::Value(val) => {
-        let resp_str = val.to_string();
+        let resp_str = JsonValue::Object(val).to_string();
         resp
           .with_header(ContentLength(resp_str.len() as u64))
           .with_header(ContentType(
