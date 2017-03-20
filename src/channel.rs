@@ -24,7 +24,7 @@ impl Sender {
 }
 
 pub trait Channel: Send + Sync {
-  fn join(&self, Sender, JsonObject);
+  fn join(&self, Sender, _: Option<String>, JsonObject);
   fn send(&self, &str, &JsonObject);
 
   fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {
@@ -32,8 +32,9 @@ pub trait Channel: Send + Sync {
       return Error::server_error("passed a non-listen request to channel")
     }
     let params = req.params().clone();
+    let id = req.id().clone();
     let (sender, reply) = make_streamed_reply(req);
-    self.join(sender, params);
+    self.join(sender, id, params);
     ok(reply).boxed()
   }
 }

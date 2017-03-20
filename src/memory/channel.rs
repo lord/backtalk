@@ -14,7 +14,7 @@ impl MemoryChannel {
 }
 
 impl Channel for MemoryChannel {
-  fn join(&self, sender: Sender, _: JsonObject) {
+  fn join(&self, sender: Sender, _: Option<String>, _: JsonObject) {
     self.senders.lock().unwrap().push(sender)
   }
 
