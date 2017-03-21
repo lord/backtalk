@@ -15,6 +15,8 @@
   - [ ] memory
 - [ ] smarter params object? so you can guarantee it'll have `path`, etc, set, and don't have to unwrap
 - [ ] add documentation
+- [ ] instead of their own functions, maybe implement `Resource` for channel and adapter?
+- [ ] rename resource to handler?
 
 ## Non-api-breaking later changes
 - [ ] should adapters accept a serializable object instead? Wait for default types in Rust maybe.

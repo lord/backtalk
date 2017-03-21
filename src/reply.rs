@@ -13,6 +13,23 @@ use Sender;
 
 type ChunkReceiver = BoxStream<HyperChunk, ()>;
 
+/**
+A successful response with JSON data to be sent back to the client.
+
+There are two kinds of replies. Static replies represent JSON data that is ready. Most requests
+return static replies. Streaming replies represent a stream of JSON data that will stream from
+a `Channel` directly to the client. You can't access the data of a streaming reply through the
+`Reply` struct, since it's not ready yet. If you want to transform or edit the reply data for a
+stream, you'll need to implement a custom `Channel` instead.
+
+These are several ways to create a Reply:
+
+- pass a Request to an Adapter to get a static response from a database
+- pass a Request to a Channel to get a streaming response
+- in your custom Resource, call `request.into_reply(data)` to create a Reply object.
+
+Reply implements `IntoFuture`, so you can return it directly from a `and_then` block.
+*/
 #[derive(Debug)]
 pub struct Reply {
   data: ReplyData,

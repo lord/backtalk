@@ -107,7 +107,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
-    if is_eventsource { 
+    if is_eventsource {
       return Ok(Request::new(
         resource_url,
         Method::Listen,
@@ -200,6 +200,10 @@ impl http::Service for HttpService {
   }
 }
 
+/**
+Routes requests to various `Resource`s based on the request URL, and runs the actual HTTP server
+and async event loop.
+*/
 pub struct Server {
   route_table: HashMap<String, Box<Resource>>
 }

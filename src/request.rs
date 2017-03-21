@@ -48,6 +48,9 @@ impl Method {
   }
 }
 
+/**
+A request containing data from the client.
+*/
 #[derive(Debug)]
 pub struct Request {
   id: Option<String>,
