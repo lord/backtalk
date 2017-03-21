@@ -1,6 +1,6 @@
 use super::{JsonObject, JsonValue, Reply, Error};
 use reply::make_reply;
-use futures::future::{IntoFuture, ok, FutureResult, AndThen, Future};
+use futures::future::{IntoFuture, ok, FutureResult, AndThen, Future, BoxFuture};
 
 /**
 A type of request, for instance "List" or "Post".
@@ -58,6 +58,7 @@ pub struct Request {
   data: JsonObject,
   resource: String,
   method: Method,
+  null: JsonValue,
 }
 
 impl Request {
@@ -67,7 +68,8 @@ impl Request {
       method: method,
       id: id,
       data: data,
-      params: params
+      params: params,
+      null: JsonValue::Null,
     }
   }
 
@@ -97,8 +99,8 @@ impl Request {
     &mut self.params
   }
 
-  pub fn param(&self, key: &str) -> Option<&JsonValue> {
-    self.params.get(key)
+  pub fn param(&self, key: &str) -> &JsonValue {
+    self.params.get(key).unwrap_or(&self.null)
   }
 
   pub fn set_param(&mut self, key: String, val: JsonValue) {
@@ -111,6 +113,10 @@ impl Request {
 
   pub fn data_mut(&mut self) -> &mut JsonObject {
     &mut self.data
+  }
+
+  pub fn boxed(self) -> BoxFuture<Request, Error> {
+    ok(self).boxed()
   }
 
   pub fn and_then<F, B>(self, f: F) -> AndThen<FutureResult<Request, Error>, B, F>

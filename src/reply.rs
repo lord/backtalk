@@ -6,7 +6,7 @@ use hyper::header::{ContentLength, ContentType};
 use hyper::mime;
 use hyper::Chunk as HyperChunk;
 use futures::{Poll, Stream, Async, IntoFuture};
-use futures::future::{ok, FutureResult};
+use futures::future::{ok, FutureResult, BoxFuture, Future};
 use futures::stream::BoxStream;
 use futures::sync::mpsc;
 use Sender;
@@ -138,8 +138,12 @@ impl Reply {
     &self.req.params()
   }
 
-  pub fn param(&self, key: &str) -> Option<&JsonValue> {
+  pub fn param(&self, key: &str) -> &JsonValue {
     self.req.param(key)
+  }
+
+  pub fn boxed(self) -> BoxFuture<Reply, Error> {
+    ok(self).boxed()
   }
 
   pub fn request_data(&self) -> &JsonObject {

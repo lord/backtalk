@@ -103,6 +103,9 @@ impl Error {
     }
   }
 
+  pub fn unauthorized<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
+    err(std_error(ErrorKind::Unauthorized, msg)).boxed()
+  }
   pub fn forbidden<T: Send + 'static>(msg: &str) -> BoxFuture<T, Error> {
     err(std_error(ErrorKind::Forbidden, msg)).boxed()
   }
