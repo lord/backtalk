@@ -2,17 +2,36 @@ use super::{JsonObject, JsonValue, Reply, Error};
 use reply::make_reply;
 use futures::future::{IntoFuture, ok, FutureResult, AndThen, Future};
 
+/**
+A type of request, for instance "List" or "Post".
+
+These mostly correspond to the HTTP methods, with the addition of `List`, `Listen`, and `Action`.
+
+- `List` is a `GET` request with an ID on a resource, such as `GET /cats`.
+- `Listen` is a `GET`
+request with a `Accept: text/event-stream` header. `Listen` requests may or may not have IDs, so
+both `GET /cats` and `GET /cats/123` with the `event-stream` header would be a `Listen` request.
+- `Action` is a custom action on a specific resource ID. For instance, `POST /cats/123/feed` would
+be `Action("feed")`.
+
+Note that we don't support `PUT` requests currently, for simplicity.
+*/
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Method {
-  // indempotent methods (must be able to call many times and it'll have the same effect/return value as just once)
-  List, // -> GET /resource
-  Get, // -> GET /resource/123
-  Delete, // -> DELETE /resource/123
-  // not indempotent
-  Post, // -> POST /resource
-  Patch, // -> PATCH /resource/123
-  Listen, // -> GET /resource or (maybe?) GET /resource/123 with content-type text/event-stream
-  Action(String), // -> POST /resource/123/actionname
+  /// `GET /resource`, indempotent
+  List,
+  /// `GET /resource/123`, indempotent
+  Get,
+  /// `DELETE /resource/123`, indempotent
+  Delete,
+  /// `POST /resource`
+  Post,
+  /// `PATCH /resource/123`
+  Patch,
+  /// Either `GET /resource/` or `GET /resource/123`, with the `Accept: text/event-stream` header
+  Listen,
+  /// `POST /resource/123/actionname`
+  Action(String),
 }
 
 impl Method {

@@ -1,4 +1,4 @@
-use {JsonValue, Request, Method, JsonObject, Error};
+use {JsonValue, Request, Method, JsonObject, Error, channel};
 use std::fmt;
 use hyper::server as http;
 use hyper::Error as HyperError;
@@ -33,7 +33,7 @@ impl fmt::Debug for ReplyData {
   }
 }
 
-// only used internally, by Response to make replies
+// only used internally
 pub fn make_reply(req: Request, data: JsonObject) -> Reply {
   Reply {
     req: req,
@@ -41,6 +41,7 @@ pub fn make_reply(req: Request, data: JsonObject) -> Reply {
   }
 }
 
+// only used internally
 pub fn make_streamed_reply(req: Request) -> (Sender, Reply) {
   let (tx, rx) = mpsc::unbounded();
   let rx = rx
@@ -52,7 +53,7 @@ pub fn make_streamed_reply(req: Request) -> (Sender, Reply) {
     req: req,
     data: ReplyData::Stream(rx)
   };
-  let sender = Sender::new(tx);
+  let sender = channel::new_sender(tx);
   (sender, reply)
 }
 

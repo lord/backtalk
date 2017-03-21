@@ -2,6 +2,18 @@ use {JsonObject, Request, Reply, Method, ErrorKind, Error};
 use futures::{BoxFuture, Future};
 use serde_json::Value as JsonValue;
 
+/**
+Converts a Request to a static Reply from a database.
+
+An `Adapter` talks to a database. If you're using an `Adapter`, and not implementing your own, you
+probably just want to use the `handle` function. By implementing the five functions `list`, `get`,
+`post`, `patch` and `delete`, an `Adapter` gets the `handle` function for free.
+
+You most likely won't want to implement your own Adapter, since these are generic and don't contain
+project-specific code. Backtalk implements `memory::MemoryAdapter` for development, but you will
+hopefully eventually be able to find third-party adapters for various databases in other crates.
+*/
+
 pub trait Adapter: Send + Sync {
   fn list(&self, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)>;
   fn get(&self, id: &str, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)>;
@@ -9,6 +21,11 @@ pub trait Adapter: Send + Sync {
   fn patch(&self, id: &str, data: &JsonObject, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)>;
   fn delete(&self, id: &str, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)>;
 
+  /**
+  Takes a `Request`, passes it to the appropriate function, and turns the response into a proper
+  `Reply` future. If you're using an `Adapter` in your webapp, this is the function you want to
+  call.
+  */
   fn handle(&self, req: Request) -> BoxFuture<Reply, Error> {
     let res = match (req.method().clone(), req.id().clone()) {
       (Method::List, _) => self.list(req.params()),

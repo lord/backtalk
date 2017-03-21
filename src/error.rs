@@ -6,21 +6,45 @@ use hyper::mime;
 use hyper::status::StatusCode;
 use futures::future::{err, BoxFuture, Future};
 
+/**
+An error response to be sent back to the client.
+
+Contains a JSON error that the client can reply to. The easiest way to create one of these
+is the various `Error::bad_request`, `Error::unavailable` etc. functions, which automatically
+return a `BoxFuture<T, Error>`, so you can return them directly from an `and_then` closure without
+wrapping in a future or boxing.
+
+If you need custom JSON in your error, you can use the `Error::new` function directly.
+
+Currently there's no way to access or change the insides of an `Error`, but that probably will
+change in the near future.
+*/
 #[derive(Debug)]
 pub struct Error {
   data: JsonValue,
   kind: ErrorKind,
 }
 
+/**
+A type of error, for instance "Bad Request" or "Server Error".
+*/
 #[derive(Debug)]
 pub enum ErrorKind {
+  /// The route requires authorization, and it was not provided or was invalid.
   Unauthorized,
+  /// The authorization was valid, but the authorized user has insufficient permissions for this route.
   Forbidden,
+  /// The client has been sending requests too quickly, and needs to slow down.
   RateLimited,
+  /// The URL wasn't found.
   NotFound,
+  /// The request was invalid or bad for some reason.
   BadRequest,
+  /// The request was invalid or bad for some reason.
   ServerError,
+  /// The server is temporarily overloaded or down for maintenance.
   Unavailable,
+  /// This HTTP method isn't allowed at this URL, and another method would be valid.
   MethodNotAllowed,
 }
 
@@ -38,6 +62,9 @@ impl ErrorKind {
     }
   }
 
+  /**
+  Returns the string version of the error. For instance, `BadRequest` returns `"bad_request"`.
+  */
   pub fn as_string(&self) -> String {
     match self {
       &ErrorKind::Unauthorized => "authorization",
@@ -66,6 +93,9 @@ fn std_error(kind: ErrorKind, err_str: &str) -> Error {
 }
 
 impl Error {
+  /**
+
+  */
   pub fn new(kind: ErrorKind, data: JsonValue) -> Error {
     Error {
       kind: kind,
