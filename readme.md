@@ -6,7 +6,7 @@
   <a href="https://docs.rs/backtalk"><img src="https://img.shields.io/badge/docs.rs-visit-brightgreen.svg" alt="Documentation"></a>-->
 </p>
 
-Backtalk is a web framework for Rust. Much is subject to change and it's probably not ready for writing production sites, but the structure is there, and I'm glad to answer questions/help out if the documentation isn't enough.
+Backtalk is a web framework for Rust. Much is subject to change and it's not ready for writing production sites, but the structure is there, and I'm glad to answer questions/help out if the documentation isn't enough.
 
 - **Asynchronous** – use Futures for everything, handle thousands of concurrent connections.
 - **Realtime** – expose a streaming API, and push live events to clients.
@@ -25,7 +25,7 @@ server.resource("/cats", move |req: Request| {
 server.listen("127.0.0.1:3000");
 ```
 
-You can look in the `examples` directory for more information, or the [blog post](https://lord.io/blog/2017/backtalk) walking through the examples.
+You can look in the `examples` directory for more information, or the [blog post](https://lord.io/blog/2017/backtalk) walking through the examples. Things should be mostly documented as well — if you run `cargo doc --open` in the repository you can view it.
 
 ## Inspiration
 
