@@ -34,8 +34,26 @@ impl MemoryAdapter {
 }
 
 impl Adapter for MemoryAdapter {
-  fn list(&self, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
-    ok(JsonObject::new()).boxed()
+  /// currently this function only supports equality matching — we'd probably want to add more
+  /// kinds of matching and querying in the future, maybe by building into query object
+  fn list(&self, params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
+    let inside = self.inside.lock().unwrap();
+    let res: Vec<JsonValue> = inside.datastore
+      .iter()
+      .map(|(_, item)| item)
+      .filter(|item| {
+        for (param_key, param_val) in params {
+          if item.get(param_key) != Some(param_val) {
+            return false;
+          }
+        }
+        true
+      })
+      .map(|item| JsonValue::Object(item.clone()))
+      .collect();
+    let mut dat = JsonObject::new();
+    dat.insert("data".to_string(), JsonValue::Array(res));
+    ok(dat).boxed()
   }
 
   fn get(&self, id: &str, _params: &JsonObject) -> BoxFuture<JsonObject, (ErrorKind, JsonValue)> {
