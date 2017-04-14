@@ -32,8 +32,8 @@ pub use reply::Reply;
 mod adapter;
 pub use adapter::Adapter;
 
-mod resource;
-pub use resource::{Resource};
+mod handler;
+pub use handler::{Handler};
 
 mod channel;
 pub use channel::{Channel, Sender};

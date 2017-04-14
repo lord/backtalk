@@ -1,4 +1,4 @@
-use {JsonValue, JsonObject, Reply, Request, Resource, Method, Error, ErrorKind};
+use {JsonValue, JsonObject, Reply, Request, Handler, Method, Error, ErrorKind};
 use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
@@ -103,7 +103,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
 
   let (id, parts) = match parts.split_last() {
     Some(t) => t,
-    None => return Err(std_error(ErrorKind::NotFound, "resource not found"))
+    None => return Err(std_error(ErrorKind::NotFound, "handler not found"))
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
@@ -147,7 +147,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
   let action_name = id;
   let (id, parts) = match parts.split_last() {
     Some(t) => t,
-    None => return Err(std_error(ErrorKind::NotFound, "resource not found"))
+    None => return Err(std_error(ErrorKind::NotFound, "handler not found"))
   };
   let resource_url = format!("/{}", parts.join("/"));
   if server.has_resource(&resource_url) {
@@ -164,7 +164,7 @@ pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper
     }
   }
 
-  Err(std_error(ErrorKind::NotFound, "resource not found"))
+  Err(std_error(ErrorKind::NotFound, "handler not found"))
 }
 
 // only one is created
@@ -201,11 +201,11 @@ impl http::Service for HttpService {
 }
 
 /**
-Routes requests to various `Resource`s based on the request URL, and runs the actual HTTP server
+Routes requests to various `Handler`s based on the request URL, and runs the actual HTTP server
 and async event loop.
 */
 pub struct Server {
-  route_table: HashMap<String, Box<Resource>>
+  route_table: HashMap<String, Box<Handler>>
 }
 
 impl Server {
@@ -227,8 +227,8 @@ impl Server {
     }
   }
 
-  pub fn resource<T: Into<String>, R: Resource + 'static>(&mut self, route: T, resource: R) {
-    self.route_table.insert(route.into(), Box::new(resource));
+  pub fn resource<T: Into<String>, R: Handler + 'static>(&mut self, route: T, handler: R) {
+    self.route_table.insert(route.into(), Box::new(handler));
   }
 
   pub fn listen<T: Into<String> + Send + 'static>(self, bind_addr: T) {
