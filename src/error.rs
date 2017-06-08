@@ -134,13 +134,7 @@ impl Error {
     resp
       .with_status(self.kind.to_hyper_status())
       .with_header(ContentLength(resp_str.len() as u64))
-      .with_header(ContentType(
-        mime::Mime(
-          mime::TopLevel::Application,
-          mime::SubLevel::Json,
-          vec![(mime::Attr::Charset, mime::Value::Utf8)]
-        )
-      ))
+      .with_header(ContentType(mime::APPLICATION_JSON))
       .with_body(Body::Once(Some(resp_str.into())))
   }
 }

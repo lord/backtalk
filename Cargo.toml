@@ -8,5 +8,5 @@ futures = "0.1.11"
 tokio-core = "0.1.6"
 serde_json = "0.9.8"
 queryst = { git = "https://github.com/lord/queryst" }
-hyper = { git = "https://github.com/hyperium/hyper", rev = "e81184e53c5c59a6262201e212a04a772f089079" }
+hyper = { git = "https://github.com/hyperium/hyper", rev = "e3834457da7dc74f466aad63b50398bea6f6eec5" }
 uuid = { version = "0.4", features = ["v4"] }

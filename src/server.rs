@@ -3,8 +3,8 @@ use futures::future::{ok, err};
 use futures::{BoxFuture, Future};
 use std::collections::HashMap;
 use hyper;
-use hyper::mime::{Mime, TopLevel, SubLevel};
-use hyper::header::{Accept};
+use hyper::mime;
+use hyper::header::{Accept,q};
 use hyper::server as http;
 use hyper::Method as HttpMethod;
 use futures::Stream;
@@ -31,13 +31,13 @@ fn std_error(kind: ErrorKind, err_str: &str) -> Error {
 pub fn http_to_req(method: &HttpMethod, path: &str, query: &str, headers: &hyper::Headers, body: Option<Vec<u8>>, server: &Arc<Server>) -> Result<Request, Error> {
   let default_accept = Accept::star();
   let accepts = headers.get::<Accept>().unwrap_or(&default_accept).as_slice().iter();
-  let (_, is_eventsource) = accepts.fold((0, false), |prev, ref quality_item| {
+  let (_, is_eventsource) = accepts.fold((q(0), false), |prev, quality_item| {
     let (mut best_qual, mut is_eventsource) = prev;
-    let this_quality = quality_item.quality.0;
+    let this_quality = quality_item.quality;
     if this_quality > best_qual {
       best_qual = this_quality;
-      let Mime(ref top_level, ref sub_level, _) = quality_item.item;
-      is_eventsource = top_level == &TopLevel::Text && sub_level == &SubLevel::EventStream;
+      let (ref top_level, ref sub_level) = (quality_item.item.type_(), quality_item.item.subtype());
+      is_eventsource = top_level == &mime::TEXT && sub_level == &mime::EVENT_STREAM;
     }
     (best_qual, is_eventsource)
   });

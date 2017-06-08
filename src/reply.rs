@@ -99,24 +99,12 @@ impl Reply {
         let resp_str = JsonValue::Object(val).to_string();
         resp
           .with_header(ContentLength(resp_str.len() as u64))
-          .with_header(ContentType(
-            mime::Mime(
-              mime::TopLevel::Application,
-              mime::SubLevel::Json,
-              vec![(mime::Attr::Charset, mime::Value::Utf8)]
-            )
-          ))
+          .with_header(ContentType(mime::APPLICATION_JSON))
           .with_body(Body::Once(Some(resp_str.into())))
       },
       ReplyData::Stream(stream) => {
         resp
-          .with_header(ContentType(
-            mime::Mime(
-              mime::TopLevel::Text,
-              mime::SubLevel::EventStream,
-              vec![(mime::Attr::Charset, mime::Value::Utf8)]
-            )
-          ))
+          .with_header(ContentType(mime::TEXT_EVENT_STREAM))
           .with_body(Body::Stream(stream))
       },
     }
