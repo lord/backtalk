@@ -7,6 +7,6 @@ authors = ["Robert Lord <hello@lord.io>"]
 futures = "0.1.11"
 tokio-core = "0.1.6"
 serde_json = "0.9.8"
-queryst = { git = "https://github.com/lord/queryst" }
-hyper = { git = "https://github.com/hyperium/hyper", rev = "e3834457da7dc74f466aad63b50398bea6f6eec5" }
+queryst-prime = "2.0.0"
+hyper = "0.11"
 uuid = { version = "0.4", features = ["v4"] }

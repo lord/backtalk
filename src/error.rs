@@ -3,7 +3,7 @@ use reply::Body;
 use hyper::server as http;
 use hyper::header::{ContentLength,ContentType};
 use hyper::mime;
-use hyper::status::StatusCode;
+use hyper::StatusCode;
 use futures::future::{err, BoxFuture, Future};
 
 /**
