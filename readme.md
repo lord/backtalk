@@ -2,8 +2,8 @@
   <img src="https://raw.githubusercontent.com/lord/img/master/logo-backtalk.png" alt="Backtalk: API Web Server" width="226">
   <br>
   <a href="https://travis-ci.org/lord/backtalk"><img src="https://travis-ci.org/lord/backtalk.svg?branch=master" alt="Build Status"></a>
-  <!--<a href="https://crates.io/crates/backtalk"><img src="https://img.shields.io/crates/v/backtalk.svg" alt="Crate Info"></a>
-  <a href="https://docs.rs/backtalk"><img src="https://img.shields.io/badge/docs.rs-visit-brightgreen.svg" alt="Documentation"></a>-->
+  <a href="https://crates.io/crates/backtalk"><img src="https://img.shields.io/crates/v/backtalk.svg" alt="Crate Info"></a>
+  <a href="https://docs.rs/backtalk"><img src="https://img.shields.io/badge/docs.rs-visit-brightgreen.svg" alt="Documentation"></a>
 </p>
 
 Backtalk is a web framework for Rust. Much is subject to change and it's not ready for writing production sites, but the structure is there, and I'm glad to answer questions/help out if the documentation isn't enough.
