@@ -6,6 +6,7 @@ description = "An asynchronous, streaming web server for JSON APIs"
 repository = "https://github.com/lord/backtalk"
 documentation = "https://docs.rs/backtalk"
 readme = "readme.md"
+license = "MIT/Apache-2.0"
 keywords = ["async", "web", "server", "framework"]
 
 [dependencies]
