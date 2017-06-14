@@ -2,6 +2,9 @@
 name = "backtalk"
 version = "0.1.0"
 authors = ["Robert Lord <hello@lord.io>"]
+repository = "https://github.com/lord/backtalk"
+documentation = "https://docs.rs/backtalk"
+readme = "readme.md"
 
 [dependencies]
 futures = "0.1.11"
