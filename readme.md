@@ -25,7 +25,7 @@ server.resource("/cats", move |req: Request| {
 server.listen("127.0.0.1:3000");
 ```
 
-You can look in the `examples` directory for more information, or the [blog post](https://lord.io/blog/2017/backtalk) walking through the examples. Things should be mostly documented as well — if you run `cargo doc --open` in the repository you can view it.
+You can look in the `examples` directory for more information, or the [blog post](https://lord.io/blog/2017/backtalk) walking through the examples.
 
 ## Inspiration
 
